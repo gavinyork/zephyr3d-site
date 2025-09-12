@@ -1,5 +1,12 @@
-import type { BindGroup, PBFunctionScope } from '@zephyr3d/device';
-import { DrawContext, MeshMaterial, ShaderHelper, applyMaterialMixins, mixinAlbedoColor, mixinLambert } from '@zephyr3d/scene';
+import type { BindGroup, PBFunctionScope, RenderStateSet } from '@zephyr3d/device';
+import type { DrawContext } from '@zephyr3d/scene';
+import {
+  MeshMaterial,
+  ShaderHelper,
+  applyMaterialMixins,
+  mixinAlbedoColor,
+  mixinLambert
+} from '@zephyr3d/scene';
 
 export class ToonMaterial extends applyMaterialMixins(MeshMaterial, mixinAlbedoColor, mixinLambert) {
   private _bands: number;
@@ -28,18 +35,18 @@ export class ToonMaterial extends applyMaterialMixins(MeshMaterial, mixinAlbedoC
       this.uniformChanged();
     }
   }
-  protected updateRenderStates(pass: number, ctx: DrawContext): void {
-    super.updateRenderStates(pass, ctx);
-    this.stateSet.useRasterizerState().cullMode = pass === 0 ? 'front' : 'back';
+  protected updateRenderStates(pass: number, stateSet: RenderStateSet, ctx: DrawContext): void {
+    super.updateRenderStates(pass, stateSet, ctx);
+    stateSet.useRasterizerState().cullMode = pass === 0 ? 'front' : 'back';
   }
   applyUniformValues(bindGroup: BindGroup, ctx: DrawContext, pass: number): void {
     super.applyUniformValues(bindGroup, ctx, pass);
-    if (this.needFragmentColor(ctx)){
-      if (pass > 0) {
+    if (pass > 0) {
+      if (this.needFragmentColor(ctx)) {
         bindGroup.setValue('bands', this._bands);
-      } else {
-        bindGroup.setValue('edge', this._edgeThickness);
       }
+    } else {
+      bindGroup.setValue('edge', this._edgeThickness);
     }
   }
   vertexShader(scope: PBFunctionScope): void {
@@ -52,15 +59,18 @@ export class ToonMaterial extends applyMaterialMixins(MeshMaterial, mixinAlbedoC
       scope.oPos = pb.add(scope.oPos, pb.mul(scope.oNorm, scope.edge));
     }
     scope.$outputs.worldPos = pb.mul(ShaderHelper.getWorldMatrix(scope), pb.vec4(scope.oPos, 1)).xyz;
-    ShaderHelper.setClipSpacePosition(scope, pb.mul(ShaderHelper.getViewProjectionMatrix(scope), pb.vec4(scope.$outputs.worldPos, 1)));
+    ShaderHelper.setClipSpacePosition(
+      scope,
+      pb.mul(ShaderHelper.getViewProjectionMatrix(scope), pb.vec4(scope.$outputs.worldPos, 1))
+    );
     scope.$outputs.wNorm = pb.mul(ShaderHelper.getNormalMatrix(scope), pb.vec4(scope.oNorm, 0)).xyz;
   }
   fragmentShader(scope: PBFunctionScope): void {
     super.fragmentShader(scope);
     const that = this;
     const pb = scope.$builder;
-    scope.$l.albedo = that.calculateAlbedoColor(scope, scope.texCoords);
-    if (this.needFragmentColor()){
+    if (this.needFragmentColor()) {
+      scope.$l.albedo = that.calculateAlbedoColor(scope, scope.texCoords);
       if (this.pass === 0) {
         this.outputFragmentColor(scope, scope.$inputs.worldPos, pb.vec4(0, 0, 0, scope.albedo.a));
       } else {

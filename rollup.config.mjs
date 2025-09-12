@@ -1,5 +1,6 @@
 import { swc } from 'rollup-plugin-swc3';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
 import terser from '@rollup/plugin-terser';
 import fs from 'fs';
 import crypto from 'crypto';
@@ -49,14 +50,21 @@ function traverseDirectory(dirPath, rootPath, dict) {
   dict = dict || {};
   for (const entry of entries) {
     const fullPath = path.join(dirPath, entry);
-    const stats = fs.statSync(fullPath);
-    if (stats.isDirectory()) {
-      // 如果是目录，则递归遍历
-      traverseDirectory(fullPath, rootPath, dict);
-    } else {
-      // 计算文件的MD5并添加到Map中
-      const fileMD5 = calculateFileMD5(fullPath);
-      dict[path.relative(rootPath, fullPath)] = fileMD5;
+    if (fullPath.indexOf('node_modules') >= 0) {
+      continue;
+    }
+    try {
+      const stats = fs.statSync(fullPath);
+      if (stats.isDirectory()) {
+        // 如果是目录，则递归遍历
+        traverseDirectory(fullPath, rootPath, dict);
+      } else {
+        // 计算文件的MD5并添加到Map中
+        const fileMD5 = calculateFileMD5(fullPath);
+        dict[path.relative(rootPath, fullPath)] = fileMD5;
+      }
+    } catch (err) {
+      console.error(`${fullPath}:${err}`);
     }
   }
   return dict;
@@ -64,24 +72,35 @@ function traverseDirectory(dirPath, rootPath, dict) {
 
 let buildCache = {};
 try {
-  if (fs.statSync(cacheFile).isFile()){
+  if (fs.statSync(cacheFile).isFile()) {
     const content = fs.readFileSync(cacheFile, 'utf8');
     buildCache = JSON.parse(content);
   }
-} catch(err) {
+} catch (err) {
   console.log('Build cache file not exists');
 }
 fs.writeFileSync(tmpcacheFile, JSON.stringify(buildCache, null, ' '));
 
 let cacheChanged = false;
 let invalidAll = false;
+let codeCompress = true;
 const dict = traverseDirectory(zephyr3d, zephyr3d);
 const cachedZephr3d = buildCache['@zephyr3d'];
-if (!deepEqual(cachedZephr3d, dict)){
+if (!deepEqual(cachedZephr3d, dict)) {
   buildCache['@zephyr3d'] = dict;
   invalidAll = true;
 }
+const pattern = process.env.SITE_TUT ? process.env.SITE_TUT.split(';') : null;
+console.log(`Build pattern: ${JSON.stringify(pattern)}`);
+if (process.env.SITE_NO_COMPRESS) {
+  codeCompress = false;
+}
+console.log(`Code compress ${codeCompress ? 'enabled' : 'disabled'}`);
+
 fs.readdirSync(srcdir).filter((dir) => {
+  if (pattern && pattern.indexOf(dir) < 0) {
+    return;
+  }
   const fullpath = path.join(srcdir, dir);
   if (fs.statSync(fullpath).isDirectory()) {
     let main = path.join(fullpath, 'main.js');
@@ -98,7 +117,6 @@ fs.readdirSync(srcdir).filter((dir) => {
       const cache = buildCache[dir];
       const dict = traverseDirectory(fullpath, fullpath);
       if (invalidAll || !deepEqual(cache, dict)) {
-        console.log('src files added: ' + main);
         buildCache[dir] = dict;
         cacheChanged = true;
         srcfiles.push([main, dir]);
@@ -107,7 +125,7 @@ fs.readdirSync(srcdir).filter((dir) => {
   }
 });
 
-if (cacheChanged){
+if (cacheChanged) {
   fs.writeFileSync(tmpcacheFile, JSON.stringify(buildCache, null, ' '), 'utf8');
 }
 
@@ -120,10 +138,12 @@ function getCacheTarget() {
     },
     plugins: [
       copy({
-        targets: [{
-          src: tmpcacheFile,
-          dest: cacheFile,
-        }],
+        targets: [
+          {
+            src: tmpcacheFile,
+            dest: cacheFile
+          }
+        ],
         hook: 'buildEnd'
       }),
       {
@@ -140,7 +160,7 @@ function getCacheTarget() {
         }
       }
     ]
-  }
+  };
 }
 
 function getTutTarget(input, output) {
@@ -154,23 +174,28 @@ function getTutTarget(input, output) {
     },
     plugins: [
       nodeResolve(),
-      swc(),
-      /*
+      swc({
+        sourceMaps: true,
+        inlineSourcesContent: false
+      }),
+      commonjs(),
       terser({
+        compress: codeCompress,
+        mangle: codeCompress,
         module: true,
         toplevel: true,
         output: {
           comments: false
         }
       }),
-      */
       copy({
         targets: [
           {
             src: `src/${output}/index.html`,
             dest: 'dist/web/tut',
             rename: `${output}.html`
-          }, {
+          },
+          {
             src: `src/${output}/main.js`,
             dest: 'dist/web/tut',
             rename: `${output}.main.js`
@@ -183,6 +208,7 @@ function getTutTarget(input, output) {
 }
 
 export default (args) => {
+  console.log(JSON.stringify(srcfiles));
   const tutTargets = srcfiles.map((f) => getTutTarget(f[0], f[1]));
   return [...tutTargets, getCacheTarget()];
 };

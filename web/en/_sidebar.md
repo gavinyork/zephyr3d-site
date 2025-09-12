@@ -34,6 +34,7 @@
     - [Introduction](en/animation-intro.md)
     - [Skeletal animation](en/animation-skeleton.md)
     - [Keyframe animation](en/animation-keyframe.md)
+    - [Animation blending](en/animation-blending.md)
     - [User animation](en/animation-custom.md)
   - PostProcessing
     - [Introduction](en/posteffect-intro.md)
@@ -41,11 +42,20 @@
     - [Bloom](en/posteffect-bloom.md)
     - [SSAO](en/posteffect-sao.md)
     - [FXAA](en/posteffect-fxaa.md)
+    - [SSR](en/posteffect-ssr.md)
   - Nature
     - [Terrain](en/terrain.md)
     - [Sky](en/sky.md)
     - [Fog](en/fog.md)
     - [Water](en/water.md)
+  - Picking
+    - [Introduction](en/picking.md)
+  - Geometry instancing
+    - [Introduction](en/instancing-intro.md)
+  - Order-Independent Transparency
+    - [Introduction](en/oit.md)
+  - Multi-viewport Rendering
+    - [Introduction](en/multi-views.md)
   - Custom material
     - [Basics](en/user-material.md)
     - [Unlit material](en/user-material-unlit.md)

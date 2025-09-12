@@ -9,7 +9,7 @@ export class AABB {
     constructor();
     constructor(box: AABB);
     constructor(minPoint: Vector3, maxPoint: Vector3);
-    beginExtend(): void;
+    beginExtend(): this;
     behindPlane(p: Plane): boolean;
     get center(): Vector3;
     static readonly ClipBack: number;
@@ -23,14 +23,14 @@ export class AABB {
     containsPoint(pt: Vector3): boolean;
     get diagonalLength(): number;
     equalsTo(other: AABB, epsl?: number): boolean;
-    extend(v: Vector3): void;
-    extend3(x: number, y: number, z: number): void;
+    extend(v: Vector3): this;
+    extend3(x: number, y: number, z: number): this;
     get extents(): Vector3;
     getClipState(viewProjMatrix: Matrix4x4): ClipState;
     getClipStateMask(viewProjMatrix: Matrix4x4, mask: number): ClipState;
     getClipStateWithFrustum(frustum: Frustum): ClipState;
     getClipStateWithFrustumMask(frustum: Frustum, mask: number): ClipState;
-    inplaceTransform(matrix: Matrix4x4): AABB;
+    inplaceTransform(matrix: Matrix4x4): this;
     intersectedWithBox(other: AABB): boolean;
     isValid(): boolean;
     get maxPoint(): Vector3;
@@ -43,7 +43,16 @@ export class AABB {
 }
 
 // @public
-export function applyMixins(derivedCtor: any, baseCtors: any[]): void;
+export function applyMixins<M extends ((target: any) => any)[], T>(target: T, ...mixins: M): T & ExtractMixinType<M>;
+
+// @public
+export function ASSERT(condition: boolean, message?: string): asserts condition;
+
+// @public
+export function base64ToText(base64: string): string;
+
+// @public
+export function base64ToUint8Array(base64: string): Uint8Array<ArrayBuffer>;
 
 // @public
 export enum BoxSide {
@@ -59,8 +68,14 @@ export enum BoxSide {
 export enum ClipState {
     A_INSIDE_B = 1,
     B_INSIDE_A = 2,
-    CLIPPED = 2,
+    CLIPPED = 3,
     NOT_CLIPPED = 0
+}
+
+// @public
+export interface Clonable<T> {
+    // (undocumented)
+    clone(): T;
 }
 
 // @public
@@ -92,39 +107,149 @@ export enum CubeFace {
 }
 
 // @public
-type EventListener_2<T extends EventMap, K extends keyof T> = (evt: T[K]) => void | Promise<void>;
+export interface DataTransferFileEntry {
+    file: File;
+    isDirectory: boolean;
+    lastModified: Date;
+    path: string;
+    size: number;
+}
+
+// @public
+export class DataTransferVFS extends VFS {
+    constructor(data: DataTransfer | FileList);
+    protected _deleteDirectory(): Promise<void>;
+    protected _deleteFile(): Promise<void>;
+    protected _deleteFileSystem(): Promise<void>;
+    protected _exists(path: string): Promise<boolean>;
+    protected _makeDirectory(): Promise<void>;
+    protected _move(): Promise<void>;
+    protected _readDirectory(path: string, options?: ListOptions): Promise<FileMetadata[]>;
+    protected _readFile(path: string, options?: ReadOptions): Promise<ArrayBuffer | string>;
+    protected _stat(path: string): Promise<FileStat>;
+    protected _wipe(): Promise<void>;
+    protected _writeFile(): Promise<void>;
+}
+
+// @public
+export function degree2radian(degree: number): number;
+
+// @public
+export class Disposable extends Observable<{
+    dispose: [];
+}> implements IDisposable {
+    constructor();
+    // (undocumented)
+    dispose(): void;
+    // (undocumented)
+    get disposed(): boolean;
+    // (undocumented)
+    protected onDispose(): void;
+}
+
+// @public
+export class DRef<T extends IDisposable> {
+    constructor(obj?: T);
+    dispose(): void;
+    get(): T;
+    set(obj: T): void;
+}
+
+// @public
+export class DWeakRef<T extends IDisposable> {
+    constructor(obj?: T);
+    dispose(): void;
+    get(): T;
+    set(obj: T): void;
+}
+
+// @public
+export type EulerAngleOrder = 'XYZ' | 'YXZ' | 'ZXY' | 'ZYX' | 'YZX' | 'XZY';
+
+// @public
+type EventListener_2<T extends EventMap, K extends keyof T> = (...args: T[K]) => void | Promise<void>;
 export { EventListener_2 as EventListener }
 
 // @public
-export type EventMap = Record<string, any>;
+export type EventMap = Record<string, any[]>;
 
 // @public
-export type EventType<T extends EventMap> = T[keyof T];
+export type ExtractMixinReturnType<M> = M extends (target: infer A) => infer R ? R : never;
+
+// @public
+export type ExtractMixinType<M> = M extends [infer First] ? ExtractMixinReturnType<First> : M extends [infer First, ...infer Rest] ? ExtractMixinReturnType<First> & ExtractMixinType<[...Rest]> : never;
+
+// @public
+export interface FileMetadata {
+    // (undocumented)
+    created: Date;
+    // (undocumented)
+    mimeType?: string;
+    // (undocumented)
+    modified: Date;
+    // (undocumented)
+    name: string;
+    // (undocumented)
+    path: string;
+    // (undocumented)
+    permissions?: number;
+    // (undocumented)
+    size: number;
+    // (undocumented)
+    type: 'file' | 'directory';
+}
+
+// @public
+export interface FileStat {
+    // (undocumented)
+    accessed?: Date;
+    // (undocumented)
+    created: Date;
+    // (undocumented)
+    isDirectory: boolean;
+    // (undocumented)
+    isFile: boolean;
+    // (undocumented)
+    modified: Date;
+    // (undocumented)
+    size: number;
+}
+
+// @public
+export function float2half(f32: number): number;
 
 // @public
 export function floatToHalf(val: number): number;
 
 // @public
+export function flushPendingDisposals(): void;
+
+// Warning: (ae-forgotten-export) The symbol "SprintfArg" needs to be exported by the entry point index.d.ts
+//
+// @public
+export function formatString(format: string, ...args: SprintfArg[]): string;
+
+// @public
 export class Frustum {
     constructor(transform: Matrix4x4);
     constructor(other: Frustum);
-    containsPoint(pt: Vector3): boolean;
+    containsPoint(pt: Vector3, epsl?: number): boolean;
     // (undocumented)
-    static readonly CORNER_LEFT_BOTTOM_FAR = 5;
+    static readonly CORNER_LEFT_BOTTOM_FAR = 3;
     // (undocumented)
-    static readonly CORNER_LEFT_BOTTOM_NEAR = 4;
+    static readonly CORNER_LEFT_BOTTOM_NEAR = 2;
     // (undocumented)
     static readonly CORNER_LEFT_TOP_FAR = 1;
     // (undocumented)
     static readonly CORNER_LEFT_TOP_NEAR = 0;
     // (undocumented)
-    static readonly CORNER_RIGHT_BOTTOM_FAR = 6;
+    static readonly CORNER_RIGHT_BOTTOM_FAR = 7;
     // (undocumented)
-    static readonly CORNER_RIGHT_BOTTOM_NEAR = 7;
+    static readonly CORNER_RIGHT_BOTTOM_NEAR = 6;
     // (undocumented)
-    static readonly CORNER_RIGHT_TOP_FAR = 2;
+    static readonly CORNER_RIGHT_TOP_FAR = 5;
     // (undocumented)
-    static readonly CORNER_RIGHT_TOP_NEAR = 3;
+    static readonly CORNER_RIGHT_TOP_NEAR = 4;
     get corners(): Vector3[];
     getCorner(pos: number): Vector3;
     initWithMatrix(transform: Matrix4x4): this;
@@ -132,16 +257,124 @@ export class Frustum {
 }
 
 // @public
-export type GenericConstructor<T = {}> = {
+export type GenericConstructor<T = object> = {
     new (...args: any[]): T;
+    isPrototypeOf(v: object): boolean;
 };
+
+// @public
+export class GenericHtmlDirectoryReader implements HttpDirectoryReader {
+    // (undocumented)
+    readonly name = "generic-html";
+    // (undocumented)
+    readOnce(dirPath: string, ctx: HttpDirectoryReaderContext): Promise<FileMetadata[]>;
+}
+
+// @public
+export class GlobMatcher {
+    constructor(pattern: string, caseSensitive?: boolean);
+    getPattern(): string;
+    test(path: string): boolean;
+}
+
+// @public
+export interface GlobOptions {
+    caseSensitive?: boolean;
+    cwd?: string;
+    ignore?: string | string[];
+    includeDirs?: boolean;
+    includeFiles?: boolean;
+    includeHidden?: boolean;
+    limit?: number;
+    recursive?: boolean;
+}
+
+// @public
+export interface GlobResult extends FileMetadata {
+    matchedPattern: string;
+    relativePath: string;
+}
+
+// @public
+export function guessMimeType(path: string): string;
+
+// @public
+export function half2float(f16: number): number;
 
 // @public
 export function halfToFloat(val: number): number;
 
 // @public
+export function halton23(length: number): [number, number][];
+
+// @public
+export class HeightField {
+    constructor(width: number, height: number, scaleY?: number, baseHeight?: number, region?: Vector4);
+    get baseHeight(): number;
+    set baseHeight(v: number);
+    calculateHeight(worldX: number, worldZ: number): number;
+    get height(): number;
+    set height(v: number);
+    get heightData(): Float32Array;
+    rayIntersect(rayWorld: Ray): number | null;
+    get region(): Vector4;
+    set region(v: Vector4);
+    sampleHeight(x: number, y: number): number;
+    get scaleY(): number;
+    set scaleY(v: number);
+    get width(): number;
+    set width(v: number);
+}
+
+// @public
+export interface HttpDirectoryReader {
+    canHandle?(dirPath: string, ctx: HttpDirectoryReaderContext): Promise<boolean> | boolean;
+    readonly name: string;
+    readOnce(dirPath: string, ctx: HttpDirectoryReaderContext): Promise<FileMetadata[]>;
+}
+
+// @public
+export interface HttpDirectoryReaderContext {
+    fetch: (url: string, init?: RequestInit) => Promise<Response>;
+    guessMimeType: (name: string) => string | undefined;
+    joinPath: (...parts: string[]) => string;
+    normalizePath: (path: string) => string;
+    toURL: (path: string) => string;
+}
+
+// @public
+export class HttpFS extends VFS {
+    constructor(baseURL: string, options?: HttpFSOptions);
+    protected _deleteDirectory(path: string): Promise<void>;
+    protected _deleteFile(path: string): Promise<void>;
+    // (undocumented)
+    protected _deleteFileSystem(): Promise<void>;
+    protected _exists(path: string): Promise<boolean>;
+    protected _makeDirectory(path: string): Promise<void>;
+    protected _move(): Promise<void>;
+    normalizePath(path: string): string;
+    protected _readDirectory(path: string, options?: ListOptions): Promise<FileMetadata[]>;
+    protected _readFile(path: string, options?: ReadOptions): Promise<ArrayBuffer | string>;
+    protected _stat(path: string): Promise<FileStat>;
+    get urlResolver(): (url: string) => string;
+    set urlResolver(resolver: (url: string) => string);
+    // (undocumented)
+    protected _wipe(): Promise<void>;
+    protected _writeFile(path: string, _data: ArrayBuffer | string, _options?: WriteOptions): Promise<void>;
+}
+
+// @public
+export interface HttpFSOptions {
+    credentials?: RequestCredentials;
+    directoryReader?: HttpDirectoryReader | HttpDirectoryReader[];
+    headers?: Record<string, string>;
+    timeout?: number;
+    urlResolver?: (url: string) => string;
+}
+
+// @public
 export class HttpRequest {
-    constructor();
+    constructor(urlResolver?: (url: string) => string);
     get crossOrigin(): string;
     set crossOrigin(val: string);
     get headers(): Record<string, string>;
@@ -149,6 +382,7 @@ export class HttpRequest {
     request(url: string): Promise<Response>;
     requestArrayBuffer(url: string): Promise<ArrayBuffer>;
     requestBlob(url: string): Promise<Blob>;
+    requestJson(url: string): Promise<string>;
     requestText(url: string): Promise<string>;
     resolveURL(url: string): string;
     get urlResolver(): (url: string) => string;
@@ -156,29 +390,83 @@ export class HttpRequest {
 }
 
 // @public
+export interface IDisposable extends IEventTarget<{
+    dispose: [];
+}> {
+    // (undocumented)
+    dispose(): void;
+    // (undocumented)
+    readonly disposed: boolean;
+}
+
+// @public
 export interface IEventTarget<T extends EventMap = any> {
-    dispatchEvent(evt: T[keyof T], type?: string & keyof T): void;
-    off<K extends keyof T>(type: K, listener: EventListener_2<T, K>): void;
+    dispatchEvent<K extends keyof T>(type: K, ...args: T[K]): void;
+    off<K extends keyof T>(type: K, listener: EventListener_2<T, K>, context?: unknown): void;
     on<K extends keyof T>(type: K, listener: EventListener_2<T, K>, context?: unknown): void;
     once<K extends keyof T>(type: K, listener: EventListener_2<T, K>, context?: unknown): void;
 }
 
 // @public
-export type InterpolationMode = 'unknown' | 'step' | 'linear' | 'cubicspline';
+export class IndexedDBFS extends VFS {
+    constructor(dbName: string, storeName: string, readonly?: boolean);
+    // (undocumented)
+    close(): Promise<void>;
+    // (undocumented)
+    static deleteDatabase(name: string): Promise<void>;
+    // (undocumented)
+    protected _deleteDirectory(path: string, recursive: boolean): Promise<void>;
+    // (undocumented)
+    protected _deleteFile(path: string): Promise<void>;
+    // (undocumented)
+    protected _deleteFileSystem(): Promise<void>;
+    // (undocumented)
+    protected _exists(path: string): Promise<boolean>;
+    // (undocumented)
+    protected _makeDirectory(path: string, recursive: boolean): Promise<void>;
+    // (undocumented)
+    protected _move(sourcePath: string, targetPath: string, options?: MoveOptions): Promise<void>;
+    // (undocumented)
+    protected _readDirectory(path: string, options?: ListOptions): Promise<FileMetadata[]>;
+    // (undocumented)
+    protected _readFile(path: string, options?: ReadOptions): Promise<ArrayBuffer | string>;
+    // (undocumented)
+    protected _stat(path: string): Promise<FileStat>;
+    // (undocumented)
+    protected _wipe(): Promise<void>;
+    // (undocumented)
+    protected _writeFile(path: string, data: ArrayBuffer | string, options?: WriteOptions): Promise<void>;
+}
+
+// @public
+export type InterpolateData = Float32Array<ArrayBuffer> | number[];
+
+// @public
+export type InterpolationMode = 'step' | 'linear' | 'cubicspline' | 'cubicspline-natural';
 
 // @public
 export type InterpolationTarget = 'number' | 'vec2' | 'vec3' | 'vec4' | 'quat';
 
 // @public
 export class Interpolator {
-    constructor(mode: InterpolationMode, target: InterpolationTarget, inputs: TypedArray, outputs: TypedArray);
+    constructor(mode: InterpolationMode, target: InterpolationTarget, inputs: InterpolateData, outputs: InterpolateData);
     static getTargetStride(target: InterpolationTarget): number;
-    interpolate(t: number, maxTime: number, result: Float32Array): Float32Array;
+    get inputs(): InterpolateData;
+    set inputs(val: InterpolateData);
+    interpolate<T extends InterpolateData>(t: number, result: T): T;
     // (undocumented)
     get maxTime(): number;
     get mode(): InterpolationMode;
+    set mode(val: InterpolationMode);
+    get outputs(): InterpolateData;
+    set outputs(val: InterpolateData);
+    get stride(): number;
     get target(): InterpolationTarget;
+    set target(val: InterpolationTarget);
 }
+
+// @public
+export function IS_INSTANCE_OF<T extends GenericConstructor>(value: unknown, constructor: T): value is InstanceType<T>;
 
 // @public
 export function isPowerOf2(value: number): boolean;
@@ -216,40 +504,26 @@ export class ListIterator<T = unknown> {
 }
 
 // @public
-export function makeEventTarget<C extends GenericConstructor | ObjectConstructor>(cls: C): <X extends EventMap>() => {
+export interface ListOptions {
+    // (undocumented)
+    includeHidden?: boolean;
+    // (undocumented)
+    pattern?: string | RegExp;
+    // (undocumented)
+    recursive?: boolean;
+}
+
+// @public
+export function makeObservable<C extends GenericConstructor | ObjectConstructor>(cls: C): <X extends EventMap>() => {
     new (...args: any[]): {
-        _listeners: Partial<{
-            [type: string]: {
-                handler: EventListener_2<InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X, any>;
-                options: REventHandlerOptions;
-                removed: boolean;
-            }[];
-        }>;
+        _listeners: EventListenerMap<InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X>;
         on<K extends keyof (InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X)>(type: K, listener: EventListener_2<InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X, K>, context?: unknown): void;
-        once<K_1 extends keyof (InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X)>(type: K_1, listener: EventListener_2<InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X, K_1>, context?: unknown): void;
-        off<K_2 extends keyof (InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X)>(type: K_2, listener: EventListener_2<InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X, K_2>): void;
-        dispatchEvent(evt: (InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X)[keyof (InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X)], type?: string & keyof (InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X)): void;
-        _internalAddEventListener<K_3 extends keyof (InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X)>(listenerMap: Partial<{
-            [type: string]: {
-                handler: EventListener_2<InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X, any>;
-                options: REventHandlerOptions;
-                removed: boolean;
-            }[];
-        }>, type: K_3, listener: EventListener_2<InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X, K_3>, options?: REventHandlerOptions): Partial<{
-            [type: string]: {
-                handler: EventListener_2<InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X, any>;
-                options: REventHandlerOptions;
-                removed: boolean;
-            }[];
-        }>;
-        _internalRemoveEventListener<K_4 extends keyof (InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X)>(listenerMap: Partial<{
-            [type: string]: {
-                handler: EventListener_2<InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X, any>;
-                options: REventHandlerOptions;
-                removed: boolean;
-            }[];
-        }>, type: K_4, listener: EventListener_2<InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X, K_4>): void;
-        _invokeLocalListeners(evt: EventType<InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X>, type?: string): void;
+        once<K extends keyof (InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X)>(type: K, listener: EventListener_2<InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X, K>, context?: unknown): void;
+        off<K extends keyof (InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X)>(type: K, listener: EventListener_2<InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X, K>, context?: unknown): void;
+        dispatchEvent<K extends keyof (InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X)>(type: K, ...args: (InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X)[K]): void;
+        _internalAddEventListener<K extends keyof (InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X)>(listenerMap: EventListenerMap<InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X>, type: K, listener: EventListener_2<InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X, K>, options: REventHandlerOptions): EventListenerMap<InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X>;
+        _internalRemoveEventListener<K extends keyof (InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X)>(listenerMap: EventListenerMap<InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X>, type: K, listener: EventListener_2<InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X, K>, context: unknown): void;
+        _invokeLocalListeners<K extends keyof (InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X)>(type: keyof (InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X), ...args: (InstanceType<C> extends IEventTarget<infer U extends EventMap> ? X & U : X)[K]): void;
     };
 } & C;
 
@@ -261,15 +535,15 @@ export class Matrix3x3 extends VectorBase {
     constructor(buffer: ArrayBuffer, offset: number);
     constructor();
     static add(a: Matrix3x3, b: Matrix3x3, result?: Matrix3x3): Matrix3x3;
-    addBy(other: Matrix3x3): Matrix3x3;
+    addBy(other: Matrix3x3): this;
     clone(): Matrix3x3;
     static div(a: Matrix3x3, b: Matrix3x3, result?: Matrix3x3): Matrix3x3;
-    divBy(other: Matrix3x3): Matrix3x3;
+    divBy(other: Matrix3x3): this;
     getCol(col: number, result?: Vector3): Vector3;
     getRow(row: number, result?: Vector3): Vector3;
     static identity(result?: Matrix3x3): Matrix3x3;
-    identity(): Matrix3x3;
-    inplaceInvert(): Matrix3x3;
+    identity(): this;
+    inplaceInvert(): this;
     static invert(matrix: Matrix3x3, result?: Matrix3x3): Matrix3x3;
     get m00(): number;
     set m00(v: number);
@@ -290,31 +564,31 @@ export class Matrix3x3 extends VectorBase {
     get m22(): number;
     set m22(v: number);
     static mul(a: Matrix3x3, b: Matrix3x3, result?: Matrix3x3): Matrix3x3;
-    mulBy(other: Matrix3x3): Matrix3x3;
+    mulBy(other: Matrix3x3): this;
     static multiply(m1: Matrix3x3, m2: Matrix3x3, result?: Matrix3x3): Matrix3x3;
-    multiplyLeft(other: Matrix3x3): Matrix3x3;
-    multiplyRight(other: Matrix3x3): Matrix3x3;
+    multiplyLeft(other: Matrix3x3): this;
+    multiplyRight(other: Matrix3x3): this;
     static rotation(axis: Vector3, angle: number, result?: Matrix3x3): Matrix3x3;
-    rotation(axis: Vector3, angle: number): Matrix3x3;
+    rotation(axis: Vector3, angle: number): this;
     static rotationX(angle: number, result?: Matrix3x3): Matrix3x3;
-    rotationX(angle: number): Matrix3x3;
+    rotationX(angle: number): this;
     static rotationY(angle: number, result?: Matrix3x3): Matrix3x3;
-    rotationY(angle: number): Matrix3x3;
+    rotationY(angle: number): this;
     static rotationZ(angle: number, result?: Matrix3x3): Matrix3x3;
-    rotationZ(angle: number): Matrix3x3;
+    rotationZ(angle: number): this;
     static scale(a: Matrix3x3, f: number, result?: Matrix3x3): Matrix3x3;
-    scaleBy(f: number): Matrix3x3;
+    scaleBy(f: number): this;
     setCol(col: number, v: Vector3): this;
     setColXYZ(col: number, x: number, y: number, z: number): this;
     setRow(row: number, v: Vector3): this;
     setRowXYZ(row: number, x: number, y: number, z: number): this;
     static sub(a: Matrix3x3, b: Matrix3x3, result?: Matrix3x3): Matrix3x3;
-    subBy(other: Matrix3x3): Matrix3x3;
+    subBy(other: Matrix3x3): this;
     transform(vec: Vector3, result?: Vector3): Vector3;
     transformPoint(vec: Vector3, result?: Vector3): Vector3;
     transformVector(vec: Vector3, result?: Vector3): Vector3;
     static transpose(matrix: Matrix3x3, result?: Matrix3x3): Matrix3x3;
-    transpose(): Matrix3x3;
+    transpose(): this;
 }
 
 // @public
@@ -325,15 +599,17 @@ export class Matrix4x4 extends VectorBase {
     constructor(buffer: ArrayBuffer, offset: number);
     constructor();
     static add(a: Matrix4x4, b: Matrix4x4, result?: Matrix4x4): Matrix4x4;
-    addBy(other: Matrix4x4): Matrix4x4;
+    addBy(other: Matrix4x4): this;
     clone(): Matrix4x4;
+    static compose(scale: Vector3, rotation: Quaternion | Matrix3x3 | Matrix4x4, translation: Vector3, result?: Matrix4x4): Matrix4x4;
+    compose(scale: Vector3, rotation: Quaternion | Matrix3x3 | Matrix4x4, translation: Vector3): this;
     decompose(scale?: Vector3, rotation?: Quaternion | Matrix3x3 | Matrix4x4, translation?: Vector3): this;
     decomposeLookAt(eye?: Vector3, target?: Vector3, up?: Vector3): this;
     det(): number;
     static div(a: Matrix4x4, b: Matrix4x4, result?: Matrix4x4): Matrix4x4;
-    divBy(other: Matrix4x4): Matrix4x4;
+    divBy(other: Matrix4x4): this;
     static frustum(left: number, right: number, bottom: number, top: number, znear: number, zfar: number, result?: Matrix4x4): Matrix4x4;
-    frustum(left: number, right: number, bottom: number, top: number, znear: number, zfar: number): Matrix4x4;
+    frustum(left: number, right: number, bottom: number, top: number, znear: number, zfar: number): this;
     getAspect(): number;
     getBottomPlane(): number;
     getCol(col: number, result?: Vector4): Vector4;
@@ -350,15 +626,15 @@ export class Matrix4x4 extends VectorBase {
     getTanHalfFov(): number;
     getTopPlane(): number;
     static identity(result?: Matrix4x4): Matrix4x4;
-    identity(): Matrix4x4;
-    inplaceInvert(): Matrix4x4;
-    inplaceInvertAffine(): Matrix4x4;
+    identity(): this;
+    inplaceInvert(): this;
+    inplaceInvertAffine(): this;
     static invert(matrix: Matrix4x4, result?: Matrix4x4): Matrix4x4;
     static invertAffine(matrix: Matrix4x4, result?: Matrix4x4): Matrix4x4;
     isOrtho(): boolean;
     isPerspective(): boolean;
     static lookAt(eye: Vector3, target: Vector3, up: Vector3, result?: Matrix4x4): Matrix4x4;
-    lookAt(eye: Vector3, target: Vector3, up: Vector3): Matrix4x4;
+    lookAt(eye: Vector3, target: Vector3, up: Vector3): this;
     static lookAtCubeFace(face: CubeFace, pos: Vector3, result?: Matrix4x4): Matrix4x4;
     get m00(): number;
     set m00(v: number);
@@ -393,68 +669,114 @@ export class Matrix4x4 extends VectorBase {
     get m33(): number;
     set m33(v: number);
     static mul(a: Matrix4x4, b: Matrix4x4, result?: Matrix4x4): Matrix4x4;
-    mulBy(other: Matrix4x4): Matrix4x4;
+    mulBy(other: Matrix4x4): this;
     static multiply(m1: Matrix4x4, m2: Matrix4x4, result?: Matrix4x4): Matrix4x4;
     static multiplyAffine(m1: Matrix4x4, m2: Matrix4x4, result?: Matrix4x4): Matrix4x4;
-    multiplyLeft(other: Matrix4x4): Matrix4x4;
-    multiplyLeftAffine(other: Matrix4x4): Matrix4x4;
-    multiplyRight(other: Matrix4x4): Matrix4x4;
-    multiplyRightAffine(other: Matrix4x4): Matrix4x4;
+    multiplyLeft(other: Matrix4x4): this;
+    multiplyLeftAffine(other: Matrix4x4): this;
+    multiplyRight(other: Matrix4x4): this;
+    multiplyRightAffine(other: Matrix4x4): this;
     // (undocumented)
     static obliquePerspective(perspectiveMatrix: Matrix4x4, nearPlane: Vector4): Matrix4x4;
     // (undocumented)
     static obliqueProjection(projectionMatrix: Matrix4x4, clipPlane: Plane): Matrix4x4;
     static ortho(left: number, right: number, bottom: number, top: number, near: number, far: number, result?: Matrix4x4): Matrix4x4;
-    ortho(left: number, right: number, bottom: number, top: number, near: number, far: number): Matrix4x4;
+    ortho(left: number, right: number, bottom: number, top: number, near: number, far: number): this;
     static perspective(fovY: number, aspect: number, znear: number, zfar: number, result?: Matrix4x4): Matrix4x4;
-    perspective(fovY: number, aspect: number, znear: number, zfar: number): Matrix4x4;
+    perspective(fovY: number, aspect: number, znear: number, zfar: number): this;
     static reflection(nx: number, ny: number, nz: number, d: number, result?: Matrix4x4): Matrix4x4;
     static rotateLeft(m: Matrix4x4, r: Matrix3x3 | Matrix4x4 | Quaternion, result?: Matrix4x4): Matrix4x4;
-    rotateLeft(r: Matrix3x3 | Matrix4x4 | Quaternion): Matrix4x4;
+    rotateLeft(r: Matrix3x3 | Matrix4x4 | Quaternion): this;
     static rotateRight(m: Matrix4x4, r: Matrix3x3 | Matrix4x4 | Quaternion, result?: Matrix4x4): Matrix4x4;
-    rotateRight(r: Matrix3x3 | Matrix4x4 | Quaternion): Matrix4x4;
+    rotateRight(r: Matrix3x3 | Matrix4x4 | Quaternion): this;
     static rotation(axis: Vector3, angle: number, result?: Matrix4x4): Matrix4x4;
-    rotation(axis: Vector3, angle: number): Matrix4x4;
+    rotation(axis: Vector3, angle: number): this;
     static rotationX(angle: number, result?: Matrix4x4): Matrix4x4;
-    rotationX(angle: number): Matrix4x4;
+    rotationX(angle: number): this;
     static rotationY(angle: number, result?: Matrix4x4): Matrix4x4;
-    rotationY(angle: number): Matrix4x4;
+    rotationY(angle: number): this;
     static rotationZ(angle: number, result?: Matrix4x4): Matrix4x4;
-    rotationZ(angle: number): Matrix4x4;
+    rotationZ(angle: number): this;
     static scale(a: Matrix4x4, f: number, result?: Matrix4x4): Matrix4x4;
-    scaleBy(f: number): Matrix4x4;
+    scaleBy(f: number): this;
     static scaleLeft(m: Matrix4x4, s: Vector3, result?: Matrix4x4): Matrix4x4;
-    scaleLeft(s: Vector3): Matrix4x4;
+    scaleLeft(s: Vector3): this;
     static scaleRight(m: Matrix4x4, s: Vector3, result?: Matrix4x4): Matrix4x4;
-    scaleRight(s: Vector3): Matrix4x4;
+    scaleRight(s: Vector3): this;
     static scaling(s: Vector3, result?: Matrix4x4): Matrix4x4;
-    scaling(s: Vector3): Matrix4x4;
+    scaling(s: Vector3): this;
     setCol(col: number, v: Vector4): this;
     setColXYZW(col: number, x: number, y: number, z: number, w: number): this;
     setNearFar(znear: number, zfar: number): this;
     setRow(row: number, v: Vector4): this;
     setRowXYZW(row: number, x: number, y: number, z: number, w: number): this;
     static sub(a: Matrix4x4, b: Matrix4x4, result?: Matrix4x4): Matrix4x4;
-    subBy(other: Matrix4x4): Matrix4x4;
+    subBy(other: Matrix4x4): this;
     transform(vec: Vector4, result?: Vector4): Vector4;
     transformAffine(vec: Vector4, result?: Vector4): Vector4;
     transformPoint(point: Vector3, result?: Vector4): Vector4;
     transformPointAffine(point: Vector3, result?: Vector3): Vector3;
+    transformPointH(point: Vector3, result?: Vector3): Vector3;
     transformPointP(point: Vector3, result?: Vector3): Vector3;
     transformVector(vec: Vector3, result?: Vector4): Vector4;
     transformVectorAffine(vec: Vector3, result?: Vector3): Vector3;
     static translateLeft(m: Matrix4x4, t: Vector3, result?: Matrix4x4): Matrix4x4;
-    translateLeft(t: Vector3): Matrix4x4;
+    translateLeft(t: Vector3): this;
     static translateRight(m: Matrix4x4, t: Vector3, result?: Matrix4x4): Matrix4x4;
-    translateRight(t: Vector3): Matrix4x4;
+    translateRight(t: Vector3): this;
     static translation(t: Vector3, result?: Matrix4x4): Matrix4x4;
-    translation(t: Vector3): Matrix4x4;
+    translation(t: Vector3): this;
     static transpose(matrix: Matrix4x4, result?: Matrix4x4): Matrix4x4;
-    transpose(): Matrix4x4;
+    transpose(): this;
+}
+
+// @public (undocumented)
+export type MaybeArray<T> = T[] | T;
+
+// @public
+export class MemoryFS extends VFS {
+    constructor(readonly?: boolean);
+    // (undocumented)
+    protected _deleteDirectory(path: string, recursive: boolean): Promise<void>;
+    // (undocumented)
+    protected _deleteFile(path: string): Promise<void>;
+    // (undocumented)
+    protected _deleteFileSystem(): Promise<void>;
+    // (undocumented)
+    protected _exists(path: string): Promise<boolean>;
+    // (undocumented)
+    protected _makeDirectory(path: string, recursive: boolean): Promise<void>;
+    // (undocumented)
+    protected _move(sourcePath: string, targetPath: string, options?: MoveOptions): Promise<void>;
+    // (undocumented)
+    protected _readDirectory(path: string, options?: ListOptions): Promise<FileMetadata[]>;
+    // (undocumented)
+    protected _readFile(path: string, options?: ReadOptions): Promise<ArrayBuffer | string>;
+    // (undocumented)
+    protected _stat(path: string): Promise<FileStat>;
+    // (undocumented)
+    protected _wipe(): Promise<void>;
+    // (undocumented)
+    protected _writeFile(path: string, data: ArrayBuffer | string, options?: WriteOptions): Promise<void>;
+}
+
+// @public
+export interface MoveOptions {
+    // (undocumented)
+    overwrite?: boolean;
 }
 
 // @public
 export function nextPowerOf2(value: number): number;
+
+// @public
+export class Observable<X extends EventMap> implements IEventTarget<X> {
+    constructor();
+    dispatchEvent<K extends keyof X>(type: K, ...args: X[K]): void;
+    off<K extends keyof X>(type: K, listener: EventListener_2<X, K>, context?: unknown): void;
+    on<K extends keyof X>(type: K, listener: EventListener_2<X, K>, context?: unknown): void;
+    once<K extends keyof X>(type: K, listener: EventListener_2<X, K>, context?: unknown): void;
+}
 
 // @public
 export class ObservableQuaternion extends Quaternion {
@@ -462,7 +784,7 @@ export class ObservableQuaternion extends Quaternion {
     set callback(cb: () => void);
     copyWithin(target: number, start: number, end?: number): this;
     fill(value: number, start?: number, end?: number): this;
-    reverse(): Float32Array;
+    reverse(): this;
     set(array: ArrayLike<number>, offset?: number): void;
     setXYZW(x: number, y: number, z: number, w: number): this;
     sort(compareFn?: (a: number, b: number) => number): this;
@@ -482,7 +804,7 @@ export class ObservableVector2 extends Vector2 {
     set callback(cb: () => void);
     copyWithin(target: number, start: number, end?: number): this;
     fill(value: number, start?: number, end?: number): this;
-    reverse(): Float32Array;
+    reverse(): this;
     set(array: ArrayLike<number>, offset?: number): void;
     setXY(x: number, y: number): this;
     sort(compareFn?: (a: number, b: number) => number): this;
@@ -498,7 +820,7 @@ export class ObservableVector3 extends Vector3 {
     set callback(cb: () => void);
     copyWithin(target: number, start: number, end?: number): this;
     fill(value: number, start?: number, end?: number): this;
-    reverse(): Float32Array;
+    reverse(): this;
     set(array: ArrayLike<number>, offset?: number): void;
     setXYZ(x: number, y: number, z: number): this;
     sort(compareFn?: (a: number, b: number) => number): this;
@@ -516,7 +838,7 @@ export class ObservableVector4 extends Vector4 {
     set callback(cb: () => void);
     copyWithin(target: number, start: number, end?: number): this;
     fill(value: number, start?: number, end?: number): this;
-    reverse(): Float32Array;
+    reverse(): this;
     set(array: ArrayLike<number>, offset?: number): void;
     setXYZW(x: number, y: number, z: number, w: number): this;
     sort(compareFn?: (a: number, b: number) => number): this;
@@ -544,6 +866,17 @@ export type PackRect = {
 
 // @public
 export function parseColor(input: string): ColorRGBA;
+
+// @public
+export class PathUtils {
+    static basename(path: string, ext?: string): string;
+    static dirname(path: string): string;
+    static extname(path: string): string;
+    static isAbsolute(path: string): boolean;
+    static join(...paths: string[]): string;
+    static normalize(path: string): string;
+    static relative(from: string, to: string): string;
+}
 
 // @public
 export class Plane extends VectorBase {
@@ -581,6 +914,16 @@ export class PRNG {
 }
 
 // @public
+export class PythonHttpServerReader implements HttpDirectoryReader {
+    // (undocumented)
+    canHandle(dirPath: string, ctx: HttpDirectoryReaderContext): Promise<boolean>;
+    // (undocumented)
+    readonly name = "python-http-server";
+    // (undocumented)
+    readOnce(dirPath: string, ctx: HttpDirectoryReaderContext): Promise<FileMetadata[]>;
+}
+
+// @public
 export class Quaternion extends VectorBase {
     constructor(x: number, y: number, z: number, w: number);
     constructor(elements: number[]);
@@ -591,37 +934,37 @@ export class Quaternion extends VectorBase {
     clone(): Quaternion;
     static conjugate(q: Quaternion, result?: Quaternion): Quaternion;
     static dot(a: Quaternion, b: Quaternion): number;
-    fromAxisAngle(axis: Vector3, angle: number): Quaternion;
+    fromAxisAngle(axis: Vector3, angle: number): this;
     static fromAxisAngle(axis: Vector3, angle: number, result?: Quaternion): Quaternion;
-    fromEulerAngle(x: number, y: number, z: number, order: 'XYZ' | 'YXZ' | 'ZXY' | 'ZYX' | 'YZX' | 'XZY'): Quaternion;
-    static fromEulerAngle(a: number, b: number, c: number, order: 'XYZ' | 'YXZ' | 'ZXY' | 'ZYX' | 'YZX' | 'XZY', result?: Quaternion): Quaternion;
-    fromRotationMatrix(matrix: Matrix3x3 | Matrix4x4): Quaternion;
+    fromEulerAngle(x: number, y: number, z: number, order?: EulerAngleOrder): this;
+    static fromEulerAngle(a: number, b: number, c: number, order?: EulerAngleOrder, result?: Quaternion): Quaternion;
+    fromRotationMatrix(matrix: Matrix3x3 | Matrix4x4): this;
     static fromRotationMatrix(matrix: Matrix3x3 | Matrix4x4, result?: Quaternion): Quaternion;
     getAxisAngle(result?: Vector4): Vector4;
     getDirectionX(result?: Vector3): Vector3;
     getDirectionY(result?: Vector3): Vector3;
     getDirectionZ(result?: Vector3): Vector3;
-    identity(): Quaternion;
+    identity(): this;
     static identity(q?: Quaternion): Quaternion;
-    inplaceConjugate(): Quaternion;
-    inplaceNormalize(): Quaternion;
+    inplaceConjugate(): this;
+    inplaceNormalize(): this;
     get magnitude(): number;
     get magnitudeSq(): number;
     static multiply(a: Quaternion, b: Quaternion, result?: Quaternion): Quaternion;
-    multiplyLeft(other: Quaternion): Quaternion;
-    multiplyRight(other: Quaternion): Quaternion;
+    multiplyLeft(other: Quaternion): this;
+    multiplyRight(other: Quaternion): this;
     static normalize(q: Quaternion, result?: Quaternion): Quaternion;
     static scale(q: Quaternion, t: number, result?: Quaternion): Quaternion;
-    scaleBy(f: number): Quaternion;
-    setAndNormalize(x: number, y: number, z: number, w: number): Quaternion;
-    setXYZW(x: number, y: number, z: number, w: number): Quaternion;
+    scaleBy(f: number): this;
+    setAndNormalize(x: number, y: number, z: number, w: number): this;
+    setXYZW(x: number, y: number, z: number, w: number): this;
     static slerp(a: Quaternion, b: Quaternion, t: number, result?: Quaternion): Quaternion;
     toAxisAngle(axis: Vector3): number;
     toEulerAngles(angles?: Vector3): Vector3;
     toMatrix3x3(matrix?: Matrix3x3): Matrix3x3;
     toMatrix4x4(matrix?: Matrix4x4): Matrix4x4;
     transform(v: Vector3, result?: Vector3): Vector3;
-    unitVectorToUnitVector(from: Vector3, to: Vector3): Quaternion;
+    unitVectorToUnitVector(from: Vector3, to: Vector3): this;
     static unitVectorToUnitVector(from: Vector3, to: Vector3, result?: Quaternion): Quaternion;
     get w(): number;
     set w(v: number);
@@ -634,15 +977,37 @@ export class Quaternion extends VectorBase {
 }
 
 // @public
+export function radian2degree(radian: number): number;
+
+// @public
+export function randomUUID(): string;
+
+// @public
 export class Ray {
     constructor(origin?: Vector3, directionNormalized?: Vector3);
     bboxIntersectionTest: (bbox: AABB) => boolean;
     bboxIntersectionTestEx: (bbox: AABB) => number | null;
     get direction(): Vector3;
+    // (undocumented)
+    intersectionTestCircle(center: Vector3, normal: Vector3, radius: number, epsl: number): {
+        dist: number;
+        epsl: number;
+    } | null;
+    intersectionTestSphere(center: Vector3, radius: number): number[] | null;
     intersectionTestTriangle(v1: Vector3, v2: Vector3, v3: Vector3, cull: boolean): number | null;
     get origin(): Vector3;
     set(origin: Vector3, directionNormalized: Vector3): void;
     transform(matrix: Matrix4x4, other?: Ray): Ray;
+}
+
+// @public
+export interface ReadOptions {
+    // (undocumented)
+    encoding?: 'utf8' | 'binary' | 'base64';
+    // (undocumented)
+    length?: number;
+    // (undocumented)
+    offset?: number;
 }
 
 // @public
@@ -653,9 +1018,15 @@ export class RectsPacker {
 }
 
 // @public
+export function releaseObject(obj: IDisposable): void;
+
+// @public
+export function retainObject(obj: IDisposable): void;
+
+// @public
 export type REventHandlerOptions = {
-    once?: boolean;
-    context?: unknown;
+    once: boolean;
+    context: unknown;
 };
 
 // @public
@@ -667,7 +1038,13 @@ export class SH {
 }
 
 // @public
+export function textToBase64(text: string): string;
+
+// @public
 export function toFloat(val: number): number;
+
+// @public
+export type Truthy<T> = T extends false | 0 | '' | null | undefined | 0n ? never : T;
 
 // @public
 export interface Tuple2 {
@@ -700,7 +1077,7 @@ export interface Tuple4 {
 }
 
 // @public
-export type TypedArray = Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array;
+export type TypedArray = Int8Array<ArrayBuffer> | Uint8Array<ArrayBuffer> | Uint8ClampedArray<ArrayBuffer> | Int16Array<ArrayBuffer> | Uint16Array<ArrayBuffer> | Int32Array<ArrayBuffer> | Uint32Array<ArrayBuffer> | Float32Array<ArrayBuffer>;
 
 // @public
 export type TypedArrayConstructor<T extends TypedArray = any> = {
@@ -714,48 +1091,56 @@ export type TypedArrayConstructor<T extends TypedArray = any> = {
 };
 
 // @public
-export function unpackFloat3<T extends number[] | Float32Array>(pk: number, result: T): void;
+export function uint8ArrayToBase64(array: Uint8Array): string;
+
+// @public
+export type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
+
+// @public
+export function unpackFloat3<T extends number[] | Float32Array<ArrayBuffer>>(pk: number, result: T): void;
 
 // @public
 export class Vector2 extends VectorBase {
     constructor(x: number, y: number);
     constructor(elements: number[]);
-    constructor(array: Float32Array);
+    constructor(array: Float32Array<ArrayBuffer>);
     constructor(buffer: ArrayBuffer, offset: number);
     constructor();
     static abs(a: Vector2, result?: Vector2): Vector2;
     static add(a: Vector2, b: Vector2, result?: Vector2): Vector2;
-    addBy(other: Vector2): Vector2;
+    addBy(other: Vector2): this;
     static axisNX(): Vector2;
     static axisNY(): Vector2;
     static axisPX(): Vector2;
     static axisPY(): Vector2;
     clone(): Vector2;
+    static combine(a: Vector2, b: Vector2, t0: number, t1: number, result?: Vector2): Vector2;
+    combineBy(other: Vector2, t0: number, t1: number): this;
     static cross(a: Vector2, b: Vector2): number;
     static distance(v1: Vector2, v2: Vector2): number;
     static distanceSq(v1: Vector2, v2: Vector2): number;
     static div(a: Vector2, b: Vector2, result?: Vector2): Vector2;
-    divBy(other: Vector2): Vector2;
+    divBy(other: Vector2): this;
     static dot(a: Vector2, b: Vector2): number;
-    inplaceInverse(): Vector2;
-    inplaceMax(other: Vector2): Vector2;
-    inplaceMin(other: Vector2): Vector2;
-    inplaceNormalize(): Vector2;
+    inplaceInverse(): this;
+    inplaceMax(other: Vector2): this;
+    inplaceMin(other: Vector2): this;
+    inplaceNormalize(): this;
     static inverse(v: Vector2, result?: Vector2): Vector2;
     get magnitude(): number;
     get magnitudeSq(): number;
     static max(a: Vector2, b: Vector2, result?: Vector2): Vector2;
     static min(a: Vector2, b: Vector2, result?: Vector2): Vector2;
     static mul(a: Vector2, b: Vector2, result?: Vector2): Vector2;
-    mulBy(other: Vector2): Vector2;
+    mulBy(other: Vector2): this;
     static normalize(v: Vector2, result?: Vector2): Vector2;
     static one(): Vector2;
     static scale(a: Vector2, b: number, result?: Vector2): Vector2;
-    scaleBy(f: number): Vector2;
+    scaleBy(f: number): this;
     setAndNormalize(x: number, y: number): this;
     setXY(x: number, y: number): this;
     static sub(a: Vector2, b: Vector2, result?: Vector2): Vector2;
-    subBy(other: Vector2): Vector2;
+    subBy(other: Vector2): this;
     get x(): number;
     set x(v: number);
     get y(): number;
@@ -767,12 +1152,12 @@ export class Vector2 extends VectorBase {
 export class Vector3 extends VectorBase {
     constructor(x: number, y: number, z: number);
     constructor(elements: number[]);
-    constructor(array: Float32Array);
+    constructor(array: Float32Array<ArrayBuffer>);
     constructor(buffer: ArrayBuffer, offset: number);
     constructor();
     static abs(a: Vector3, result?: Vector3): Vector3;
     static add(a: Vector3, b: Vector3, result?: Vector3): Vector3;
-    addBy(other: Vector3): Vector3;
+    addBy(other: Vector3): this;
     static axisNX(): Vector3;
     static axisNY(): Vector3;
     static axisNZ(): Vector3;
@@ -780,31 +1165,33 @@ export class Vector3 extends VectorBase {
     static axisPY(): Vector3;
     static axisPZ(): Vector3;
     clone(): Vector3;
+    static combine(a: Vector3, b: Vector3, t0: number, t1: number, result?: Vector3): Vector3;
+    combineBy(other: Vector3, t0: number, t1: number): this;
     static cross(a: Vector3, b: Vector3, result?: Vector3): Vector3;
     static distance(v1: Vector3, v2: Vector3): number;
     static distanceSq(v1: Vector3, v2: Vector3): number;
     static div(a: Vector3, b: Vector3, result?: Vector3): Vector3;
-    divBy(other: Vector3): Vector3;
+    divBy(other: Vector3): this;
     static dot(a: Vector3, b: Vector3): number;
-    inplaceInverse(): Vector3;
-    inplaceMax(other: Vector3): Vector3;
-    inplaceMin(other: Vector3): Vector3;
-    inplaceNormalize(): Vector3;
+    inplaceInverse(): this;
+    inplaceMax(other: Vector3): this;
+    inplaceMin(other: Vector3): this;
+    inplaceNormalize(): this;
     static inverse(v: Vector3, result?: Vector3): Vector3;
     get magnitude(): number;
     get magnitudeSq(): number;
     static max(a: Vector3, b: Vector3, result?: Vector3): Vector3;
     static min(a: Vector3, b: Vector3, result?: Vector3): Vector3;
     static mul(a: Vector3, b: Vector3, result?: Vector3): Vector3;
-    mulBy(other: Vector3): Vector3;
+    mulBy(other: Vector3): this;
     static normalize(v: Vector3, result?: Vector3): Vector3;
     static one(): Vector3;
     static scale(a: Vector3, b: number, result?: Vector3): Vector3;
-    scaleBy(f: number): Vector3;
-    setAndNormalize(x: number, y: number, z: number): Vector3;
-    setXYZ(x: number, y: number, z: number): Vector3;
+    scaleBy(f: number): this;
+    setAndNormalize(x: number, y: number, z: number): this;
+    setXYZ(x: number, y: number, z: number): this;
     static sub(a: Vector3, b: Vector3, result?: Vector3): Vector3;
-    subBy(other: Vector3): Vector3;
+    subBy(other: Vector3): this;
     get x(): number;
     set x(v: number);
     xy(): Vector2;
@@ -824,7 +1211,7 @@ export class Vector4 extends VectorBase {
     constructor();
     static abs(a: Vector4, result?: Vector4): Vector4;
     static add(a: Vector4, b: Vector4, result?: Vector4): Vector4;
-    addBy(other: Vector4): Vector4;
+    addBy(other: Vector4): this;
     static axisNW(): Vector4;
     static axisNX(): Vector4;
     static axisNY(): Vector4;
@@ -834,28 +1221,30 @@ export class Vector4 extends VectorBase {
     static axisPY(): Vector4;
     static axisPZ(): Vector4;
     clone(): Vector4;
+    static combine(a: Vector4, b: Vector4, t0: number, t1: number, result?: Vector4): Vector4;
+    combineBy(other: Vector4, t0: number, t1: number): this;
     static div(a: Vector4, b: Vector4, result?: Vector4): Vector4;
-    divBy(other: Vector4): Vector4;
+    divBy(other: Vector4): this;
     static dot(a: Vector4, b: Vector4): number;
-    inplaceInverse(): Vector4;
-    inplaceMax(other: Vector4): Vector4;
-    inplaceMin(other: Vector4): Vector4;
-    inplaceNormalize(): Vector4;
+    inplaceInverse(): this;
+    inplaceMax(other: Vector4): this;
+    inplaceMin(other: Vector4): this;
+    inplaceNormalize(): this;
     static inverse(v: Vector4, result?: Vector4): Vector4;
     get magnitude(): number;
     get magnitudeSq(): number;
     static max(a: Vector4, b: Vector4, result?: Vector4): Vector4;
     static min(a: Vector4, b: Vector4, result?: Vector4): Vector4;
     static mul(a: Vector4, b: Vector4, result?: Vector4): Vector4;
-    mulBy(other: Vector4): Vector4;
+    mulBy(other: Vector4): this;
     static normalize(v: Vector4, result?: Vector4): Vector4;
     static one(): Vector4;
     static scale(a: Vector4, b: number, result?: Vector4): Vector4;
-    scaleBy(f: number): Vector4;
-    setAndNormalize(x: number, y: number, z: number, w: number): Vector4;
-    setXYZW(x: number, y: number, z: number, w: number): Vector4;
+    scaleBy(f: number): this;
+    setAndNormalize(x: number, y: number, z: number, w: number): this;
+    setXYZW(x: number, y: number, z: number, w: number): this;
     static sub(a: Vector4, b: Vector4, result?: Vector4): Vector4;
-    subBy(other: Vector4): Vector4;
+    subBy(other: Vector4): this;
     get w(): number;
     set w(v: number);
     get x(): number;
@@ -871,10 +1260,229 @@ export class Vector4 extends VectorBase {
 
 // @public
 export class VectorBase extends Float32Array {
-    equalsTo(other: Float32Array, epsl?: number): boolean;
+    equalsTo(other: Float32Array<ArrayBuffer>, epsl?: number): boolean;
     isNaN(): boolean;
+    setRandom(minValue: number, maxValue: number): void;
     toString(): string;
 }
+
+// @public
+export abstract class VFS extends Observable<{
+    changed: [type: 'created' | 'deleted' | 'moved' | 'modified', path: string, itemType: 'file' | 'directory'];
+}> {
+    constructor(readOnly?: boolean);
+    basename(path: string): string;
+    chdir(path: string): Promise<void>;
+    close(): Promise<void>;
+    copyFile(src: string, dest: string, options?: {
+        overwrite?: boolean;
+        targetVFS?: VFS;
+    }): Promise<void>;
+    copyFileEx(sourcePattern: string | string[], targetDirectory: string, options?: {
+        cwd?: string;
+        overwrite?: boolean;
+        targetVFS?: VFS;
+        onProgress?: (current: number, total: number) => void;
+    }): Promise<void>;
+    // (undocumented)
+    deleteDirectory(path: string, recursive?: boolean): Promise<void>;
+    protected abstract _deleteDirectory(path: string, recursive: boolean): Promise<void>;
+    deleteFile(path: string): Promise<void>;
+    protected abstract _deleteFile(path: string): Promise<void>;
+    deleteFileSystem(): Promise<void>;
+    // (undocumented)
+    protected abstract _deleteFileSystem(): Promise<void>;
+    dirname(path: string): string;
+    exists(path: string): Promise<boolean>;
+    protected abstract _exists(path: string): Promise<boolean>;
+    getCwd(): string;
+    getSimpleMountPoints(): string[];
+    glob(pattern: string | string[], options?: GlobOptions): Promise<GlobResult[]>;
+    // (undocumented)
+    guessMIMEType(path: string): string;
+    hasMounts(): boolean;
+    isAbsolute(path: string): boolean;
+    isObjectURL(url: string): boolean;
+    isParentOf(parentPath: string, path: string): boolean;
+    join(...paths: string[]): string;
+    makeDirectory(path: string, recursive?: boolean): Promise<void>;
+    protected abstract _makeDirectory(path: string, recursive: boolean): Promise<void>;
+    mount(path: string, vfs: VFS): void;
+    move(sourcePath: string, targetPath: string, options?: MoveOptions): Promise<void>;
+    protected abstract _move(sourcePath: string, targetPath: string, options?: MoveOptions): Promise<void>;
+    normalizePath(path: string): string;
+    protected onChange(type: 'created' | 'deleted' | 'moved' | 'modified', path: string, itemType: 'file' | 'directory'): void;
+    parseDataURI(uri: string): RegExpMatchArray;
+    popd(): Promise<void>;
+    pushd(path: string): Promise<void>;
+    // (undocumented)
+    readDirectory(path: string, options?: ListOptions): Promise<FileMetadata[]>;
+    protected abstract _readDirectory(path: string, options?: ListOptions): Promise<FileMetadata[]>;
+    readFile(path: string, options?: ReadOptions): Promise<ArrayBuffer | string>;
+    protected abstract _readFile(path: string, options?: ReadOptions): Promise<ArrayBuffer | string>;
+    readonly readOnly: boolean;
+    relative(path: string, parent?: string): string;
+    stat(path: string): Promise<FileStat>;
+    protected abstract _stat(path: string): Promise<FileStat>;
+    unmount(path: string): boolean;
+    wipe(): Promise<void>;
+    // (undocumented)
+    protected abstract _wipe(): Promise<void>;
+    writeFile(path: string, data: ArrayBuffer | string, options?: WriteOptions): Promise<void>;
+    protected abstract _writeFile(path: string, data: ArrayBuffer | string, options?: WriteOptions): Promise<void>;
+}
+
+// @public
+export class VFSError extends Error {
+    constructor(message: string, code?: string, path?: string);
+    // (undocumented)
+    code?: string;
+    // (undocumented)
+    path?: string;
+}
+
+// @public
+export function weightedAverage<T>(weights: number[], values: T[], funcLerp: (a: T, b: T, w: number) => T): T;
+
+// @public
+export interface WriteOptions {
+    // (undocumented)
+    append?: boolean;
+    // (undocumented)
+    create?: boolean;
+    // (undocumented)
+    encoding?: 'utf8' | 'binary' | 'base64';
+}
+
+// @public
+export interface ZipEntry {
+    // (undocumented)
+    comment?: string;
+    // (undocumented)
+    isDirectory: boolean;
+    // (undocumented)
+    lastModified: Date;
+    // (undocumented)
+    path: string;
+    // (undocumented)
+    size: number;
+}
+
+// @public
+export class ZipFS extends VFS {
+    constructor(zipJS: ZipJSDependencies, readonly?: boolean);
+    addFromVFS(sourceVFS: VFS, sourcePath: string, targetPath?: string, options?: {
+        recursive?: boolean;
+        filter?: (path: string) => boolean;
+        progress?: (current: number, total: number, path: string) => void;
+    }): Promise<void>;
+    close(): Promise<void>;
+    protected _deleteDirectory(path: string, recursive: boolean): Promise<void>;
+    protected _deleteFile(path: string): Promise<void>;
+    protected _deleteFileSystem(): Promise<void>;
+    protected _exists(path: string): Promise<boolean>;
+    extractTo(targetVFS: VFS, targetPath?: string, options?: {
+        overwrite?: boolean;
+        filter?: (path: string) => boolean;
+        progress?: (current: number, total: number, path: string) => void;
+    }): Promise<void>;
+    flush(): Promise<void>;
+    getCompressionStats(): Promise<{
+        totalEntries: number;
+        totalUncompressedSize: number;
+        totalCompressedSize: number;
+        compressionRatio: number;
+    }>;
+    getEntries(): Promise<ZipEntry[]>;
+    getZipBlob(): Promise<Blob>;
+    getZipData(): Promise<Uint8Array<ArrayBuffer>>;
+    hasUnsavedChanges(): boolean;
+    initializeFromData(data: Blob | Uint8Array<ArrayBuffer> | ArrayBuffer): Promise<void>;
+    protected _makeDirectory(path: string, recursive: boolean): Promise<void>;
+    // (undocumented)
+    protected _move(sourcePath: string, targetPath: string, options?: MoveOptions): Promise<void>;
+    protected _readDirectory(path: string, options?: ListOptions): Promise<FileMetadata[]>;
+    protected _readFile(path: string, options?: ReadOptions): Promise<ArrayBuffer | string>;
+    saveToVFS(targetVFS: VFS, path: string): Promise<void>;
+    protected _stat(path: string): Promise<FileStat>;
+    verify(): Promise<{
+        isValid: boolean;
+        errors: string[];
+        warnings: string[];
+    }>;
+    protected _wipe(): Promise<void>;
+    protected _writeFile(path: string, data: ArrayBuffer | string, options?: WriteOptions): Promise<void>;
+}
+
+// @public
+export interface ZipJSDependencies {
+    // (undocumented)
+    BlobReader: new (blob: Blob) => any;
+    // (undocumented)
+    BlobWriter: new () => any;
+    // (undocumented)
+    configure?: (options: any) => void;
+    // (undocumented)
+    TextReader: new (text: string) => any;
+    // (undocumented)
+    TextWriter: new (encoding?: string) => any;
+    // (undocumented)
+    Uint8ArrayReader: new (array: Uint8Array<ArrayBuffer>) => any;
+    // (undocumented)
+    Uint8ArrayWriter: new () => any;
+    // (undocumented)
+    ZipReader: ZipJSReaderConstructor;
+    // (undocumented)
+    ZipWriter: ZipJSWriterConstructor;
+}
+
+// @public
+export interface ZipJSEntry {
+    // (undocumented)
+    comment?: string;
+    // (undocumented)
+    directory: boolean;
+    // (undocumented)
+    filename: string;
+    // (undocumented)
+    getData?(writer: any): Promise<any>;
+    // (undocumented)
+    lastModDate?: Date;
+    // (undocumented)
+    uncompressedSize?: number;
+}
+
+// @public
+export interface ZipJSReader {
+    // (undocumented)
+    close?(): Promise<void>;
+    // (undocumented)
+    getEntries(): Promise<ZipJSEntry[]>;
+}
+
+// @public
+export interface ZipJSReaderConstructor {
+    // (undocumented)
+    new (reader: any): ZipJSReader;
+}
+
+// @public
+export interface ZipJSWriter {
+    // (undocumented)
+    add(filename: string, reader?: any, options?: any): Promise<any>;
+    // (undocumented)
+    close(): Promise<any>;
+}
+
+// @public
+export interface ZipJSWriterConstructor {
+    // (undocumented)
+    new (writer: any): ZipJSWriter;
+}
+
+// Warnings were encountered during analysis:
+//
+// dist/index.d.ts:364:9 - (ae-forgotten-export) The symbol "EventListenerMap" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 

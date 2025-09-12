@@ -5,37 +5,46 @@
 ```ts
 
 import { CubeFace } from '@zephyr3d/base';
+import { IDisposable } from '@zephyr3d/base';
 import { IEventTarget } from '@zephyr3d/base';
+import { MaybeArray } from '@zephyr3d/base';
+import { Observable } from '@zephyr3d/base';
 import { TypedArray } from '@zephyr3d/base';
 import { Vector4 } from '@zephyr3d/base';
 import { VectorBase } from '@zephyr3d/base';
 
 // @public
 export interface AbstractDevice extends IEventTarget<DeviceEventMap> {
+    beginCapture(): void;
     beginFrame(): boolean;
     buildComputeProgram(options: PBComputeOptions): GPUProgram;
     buildRenderProgram(options: PBRenderOptions): GPUProgram;
-    cancelNextFrameCall(f: () => void): void;
+    cancelNextFrame(handle: number): any;
     canvas: HTMLCanvasElement;
     clearFrameBuffer(clearColor: Vector4, clearDepth: number, clearStencil: number): any;
     compute(workgroupCountX: number, workgroupCountY: number, workgroupCountZ: number): void;
+    copyBuffer(sourceBuffer: GPUDataBuffer, destBuffer: GPUDataBuffer, srcOffset: number, dstOffset: number, bytes: number): any;
+    copyFramebufferToTexture2D(src: FrameBuffer, index: number, dst: Texture2D, level: number): any;
+    copyTexture2D(src: Texture2D, srcLevel: number, dst: Texture2D, dstLevel: number): any;
     createBindGroup(layout: BindGroupLayout): BindGroup;
+    createBlendingState(): BlendingState;
     createBuffer(sizeInBytes: number, options: BufferCreationOptions): GPUDataBuffer;
+    createColorState(): ColorState;
     createCubeTexture(format: TextureFormat, size: number, options?: TextureCreationOptions): TextureCube;
-    createCubeTextureFromMipmapData(data: TextureMipmapData, sRGB: boolean, options?: TextureCreationOptions): TextureCube;
+    createDepthState(): DepthState;
     createFrameBuffer(colorAttachments: BaseTexture[], depthAttachment: BaseTexture, options?: FrameBufferOptions): FrameBuffer;
     createGPUProgram(params: GPUProgramConstructParams): GPUProgram;
-    createIndexBuffer(data: Uint16Array | Uint32Array, options?: BufferCreationOptions): IndexBuffer;
+    createIndexBuffer(data: Uint16Array<ArrayBuffer> | Uint32Array<ArrayBuffer>, options?: BufferCreationOptions): IndexBuffer;
     createInterleavedVertexBuffer(attribFormats: VertexAttribFormat[], data: TypedArray, options?: BufferCreationOptions): StructuredBuffer;
+    createRasterizerState(): RasterizerState;
     createRenderStateSet(): RenderStateSet;
     createSampler(options: SamplerOptions): TextureSampler;
+    createStencilState(): StencilState;
     createStructuredBuffer(structureType: PBStructTypeInfo, options: BufferCreationOptions, data?: TypedArray): StructuredBuffer;
     createTexture2D(format: TextureFormat, width: number, height: number, options?: TextureCreationOptions): Texture2D;
     createTexture2DArray(format: TextureFormat, width: number, height: number, depth: number, options?: TextureCreationOptions): Texture2DArray;
     createTexture2DArrayFromImages(elements: TextureImageElement[], sRGB: boolean, options?: TextureCreationOptions): Texture2DArray;
-    createTexture2DArrayFromMipmapData(data: TextureMipmapData, options?: TextureCreationOptions): Texture2DArray;
     createTexture2DFromImage(element: TextureImageElement, sRGB: boolean, options?: TextureCreationOptions): Texture2D;
-    createTexture2DFromMipmapData(data: TextureMipmapData, sRGB: boolean, options?: TextureCreationOptions): Texture2D;
     createTexture3D(format: TextureFormat, width: number, height: number, depth: number, options?: TextureCreationOptions): Texture3D;
     createTextureFromMipmapData<T extends BaseTexture = BaseTexture>(data: TextureMipmapData, sRGB: boolean, options?: TextureCreationOptions): T;
     createTextureVideo(el: HTMLVideoElement, samplerOptions?: SamplerOptions): TextureVideo;
@@ -45,10 +54,13 @@ export interface AbstractDevice extends IEventTarget<DeviceEventMap> {
     draw(primitiveType: PrimitiveType, first: number, count: number): void;
     drawInstanced(primitiveType: PrimitiveType, first: number, count: number, numInstances: number): void;
     drawText(text: string, x: number, y: number, color: string): any;
+    endCapture(): RenderBundle;
     endFrame(): void;
+    executeRenderBundle(renderBundle: RenderBundle): any;
     exitLoop(): void;
     flush(): void;
     frameInfo: FrameInfo;
+    getAdapterInfo(): any;
     getBackBufferHeight(): number;
     getBackBufferWidth(): number;
     getBindGroup(index: number): [BindGroup, Iterable<number>];
@@ -59,6 +71,7 @@ export interface AbstractDevice extends IEventTarget<DeviceEventMap> {
     getFrameBufferSampleCount(): number;
     getGPUObjectById(uid: number): GPUObject;
     getGPUObjects(): GPUObjectList;
+    getPool(key: string | symbol): Pool;
     getProgram(): GPUProgram;
     getRenderStates(): RenderStateSet;
     getScale(): number;
@@ -69,6 +82,9 @@ export interface AbstractDevice extends IEventTarget<DeviceEventMap> {
     isContextLost(): boolean;
     isRendering: boolean;
     isWindingOrderReversed(): boolean;
+    nextFrame(callback: () => void): number;
+    pool: Pool;
+    poolExists(key: string | symbol): boolean;
     popDeviceStates(): any;
     programBuilder: ProgramBuilder;
     pushDeviceStates(): any;
@@ -78,10 +94,17 @@ export interface AbstractDevice extends IEventTarget<DeviceEventMap> {
     runLoop(func: (device: AbstractDevice) => void): void;
     runLoopFunction: (device: AbstractDevice) => void;
     runNextFrame(f: () => void): void;
+    runNextFrameAsync(f: () => void): Promise<void>;
     screenToDevice(val: number): number;
     setBindGroup(index: number, bindGroup: BindGroup, dynamicOffsets?: Iterable<number>): any;
     setFont(fontName: string): any;
-    setFramebuffer(rt: FrameBuffer): void;
+    setFramebuffer(rt: FrameBuffer): any;
+    setFramebuffer(color: (BaseTexture | {
+        texture: BaseTexture;
+        miplevel?: number;
+        face?: number;
+        layer?: number;
+    })[], depth?: BaseTexture, miplevel?: number, face?: number, sampleCount?: number): any;
     setProgram(program: GPUProgram): void;
     setRenderStates(renderStates: RenderStateSet): void;
     setScissor(scissor?: DeviceViewport | number[]): void;
@@ -89,12 +112,13 @@ export interface AbstractDevice extends IEventTarget<DeviceEventMap> {
     setViewport(vp?: DeviceViewport | number[]): void;
     type: string;
     videoMemoryUsage: number;
+    vSync: boolean;
 }
 
 // @public
 export interface ArrayTypeDetail {
     dimension: number;
-    elementType: PBPrimitiveTypeInfo | PBArrayTypeInfo | PBStructTypeInfo | PBAnyTypeInfo;
+    elementType: PBPrimitiveTypeInfo | PBArrayTypeInfo | PBStructTypeInfo | PBAnyTypeInfo | PBAtomicI32TypeInfo | PBAtomicU32TypeInfo;
 }
 
 // @public
@@ -126,7 +150,7 @@ export interface BaseCreationOptions {
 }
 
 // @public
-export abstract class BaseDevice {
+export abstract class BaseDevice extends Observable<DeviceEventMap> {
     constructor(cvs: HTMLCanvasElement, backend: DeviceBackend);
     // (undocumented)
     addGPUObject(obj: GPUObject): void;
@@ -134,6 +158,8 @@ export abstract class BaseDevice {
     get backend(): DeviceBackend;
     // (undocumented)
     protected _backend: DeviceBackend;
+    // (undocumented)
+    abstract beginCapture(): void;
     // (undocumented)
     beginFrame(): boolean;
     // (undocumented)
@@ -145,7 +171,7 @@ export abstract class BaseDevice {
     // (undocumented)
     buildRenderProgram(options: PBRenderOptions): GPUProgram;
     // (undocumented)
-    cancelNextFrameCall(f: () => void): void;
+    abstract cancelNextFrame(handle: number): any;
     // (undocumented)
     get canvas(): HTMLCanvasElement;
     // (undocumented)
@@ -161,15 +187,25 @@ export abstract class BaseDevice {
     // (undocumented)
     protected abstract _compute(workgroupCountX: number, workgroupCountY: number, workgroupCountZ: number): void;
     // (undocumented)
+    abstract copyBuffer(sourceBuffer: GPUDataBuffer, destBuffer: GPUDataBuffer, srcOffset: number, dstOffset: number, bytes: number): any;
+    // (undocumented)
+    abstract copyFramebufferToTexture2D(src: FrameBuffer, index: number, dst: Texture2D, level: number): any;
+    // (undocumented)
+    abstract copyTexture2D(src: Texture2D, srcLevel: number, dst: Texture2D, dstLevel: number): any;
+    // (undocumented)
     protected _cpuTimer: CPUTimer;
     // (undocumented)
     abstract createBindGroup(layout: BindGroupLayout): BindGroup;
     // (undocumented)
+    abstract createBlendingState(): BlendingState;
+    // (undocumented)
     abstract createBuffer(sizeInBytes: number, options: BufferCreationOptions): GPUDataBuffer;
+    // (undocumented)
+    abstract createColorState(): ColorState;
     // (undocumented)
     abstract createCubeTexture(format: TextureFormat, size: number, options?: TextureCreationOptions): TextureCube;
     // (undocumented)
-    abstract createCubeTextureFromMipmapData(data: TextureMipmapData, sRGB: boolean, options?: TextureCreationOptions): TextureCube;
+    abstract createDepthState(): DepthState;
     // (undocumented)
     abstract createFrameBuffer(colorAttachments: BaseTexture[], depthAttachment: BaseTexture, options?: FrameBufferOptions): FrameBuffer;
     // (undocumented)
@@ -177,13 +213,17 @@ export abstract class BaseDevice {
     // (undocumented)
     abstract createGPUTimer(): ITimer;
     // (undocumented)
-    abstract createIndexBuffer(data: Uint16Array | Uint32Array, options?: BufferCreationOptions): IndexBuffer;
+    abstract createIndexBuffer(data: Uint16Array<ArrayBuffer> | Uint32Array<ArrayBuffer>, options?: BufferCreationOptions): IndexBuffer;
     // (undocumented)
     createInterleavedVertexBuffer(attribFormats: VertexAttribFormat[], data: TypedArray, options?: BufferCreationOptions): StructuredBuffer;
+    // (undocumented)
+    abstract createRasterizerState(): RasterizerState;
     // (undocumented)
     abstract createRenderStateSet(): RenderStateSet;
     // (undocumented)
     abstract createSampler(options: SamplerOptions): TextureSampler;
+    // (undocumented)
+    abstract createStencilState(): StencilState;
     // (undocumented)
     abstract createStructuredBuffer(structureType: PBStructTypeInfo, options: BufferCreationOptions, data?: TypedArray): StructuredBuffer;
     // (undocumented)
@@ -193,11 +233,7 @@ export abstract class BaseDevice {
     // (undocumented)
     abstract createTexture2DArrayFromImages(elements: TextureImageElement[], sRGB: boolean, options?: TextureCreationOptions): Texture2DArray;
     // (undocumented)
-    abstract createTexture2DArrayFromMipmapData(data: TextureMipmapData, options?: TextureCreationOptions): Texture2DArray;
-    // (undocumented)
     abstract createTexture2DFromImage(element: TextureImageElement, sRGB: boolean, options?: TextureCreationOptions): Texture2D;
-    // (undocumented)
-    abstract createTexture2DFromMipmapData(data: TextureMipmapData, sRGB: boolean, options?: TextureCreationOptions): Texture2D;
     // (undocumented)
     abstract createTexture3D(format: TextureFormat, width: number, height: number, depth: number, options?: TextureCreationOptions): Texture3D;
     // (undocumented)
@@ -208,6 +244,8 @@ export abstract class BaseDevice {
     createVertexBuffer(attribFormat: VertexAttribFormat, data: TypedArray, options?: BufferCreationOptions): StructuredBuffer;
     // (undocumented)
     abstract createVertexLayout(options: VertexLayoutOptions): VertexLayout;
+    // (undocumented)
+    protected _defaultPoolKey: symbol;
     // (undocumented)
     deviceToScreen(val: number): number;
     // (undocumented)
@@ -227,9 +265,15 @@ export abstract class BaseDevice {
     // (undocumented)
     enableGPUTimeRecording(enable: boolean): void;
     // (undocumented)
+    abstract endCapture(): RenderBundle;
+    // (undocumented)
     endFrame(): void;
     // (undocumented)
     protected _endFrameTime: number;
+    // (undocumented)
+    executeRenderBundle(renderBundle: RenderBundle): void;
+    // (undocumented)
+    protected abstract _executeRenderBundle(renderBundle: RenderBundle): number;
     // (undocumented)
     exitLoop(): void;
     // (undocumented)
@@ -243,6 +287,8 @@ export abstract class BaseDevice {
     get frameInfo(): FrameInfo;
     // (undocumented)
     protected _frameInfo: FrameInfo;
+    // (undocumented)
+    abstract getAdapterInfo(): any;
     // (undocumented)
     abstract getBackBufferHeight(): number;
     // (undocumented)
@@ -263,6 +309,8 @@ export abstract class BaseDevice {
     getGPUObjectById(uid: number): GPUObject;
     // (undocumented)
     getGPUObjects(): GPUObjectList;
+    // (undocumented)
+    getPool(key: string | symbol): Pool;
     // (undocumented)
     abstract getProgram(): GPUProgram;
     // (undocumented)
@@ -296,6 +344,8 @@ export abstract class BaseDevice {
     // (undocumented)
     abstract looseContext(): void;
     // (undocumented)
+    abstract nextFrame(callback: () => void): number;
+    // (undocumented)
     protected abstract onBeginFrame(): boolean;
     // (undocumented)
     protected abstract onEndFrame(): void;
@@ -303,6 +353,12 @@ export abstract class BaseDevice {
     protected parseBufferOptions(options: BufferCreationOptions, defaultUsage?: BufferUsage): number;
     // (undocumented)
     protected parseTextureOptions(options?: TextureCreationOptions): number;
+    // (undocumented)
+    get pool(): Pool;
+    // (undocumented)
+    poolExists(key: string | symbol): boolean;
+    // (undocumented)
+    protected _poolMap: Map<string | symbol, Pool>;
     // (undocumented)
     popDeviceStates(): void;
     // (undocumented)
@@ -316,13 +372,13 @@ export abstract class BaseDevice {
     // (undocumented)
     abstract readPixelsToBuffer(index: number, x: number, y: number, w: number, h: number, buffer: GPUDataBuffer): void;
     // (undocumented)
-    protected reloadAll(): Promise<void>;
+    protected reloadAll(): void;
     // (undocumented)
     removeGPUObject(obj: GPUObject): void;
     // (undocumented)
     abstract restoreContext(): void;
     // (undocumented)
-    restoreObject(obj: GPUObject): Promise<void>;
+    restoreObject(obj: GPUObject): void;
     // (undocumented)
     abstract reverseVertexWindingOrder(reverse: boolean): void;
     // (undocumented)
@@ -334,6 +390,8 @@ export abstract class BaseDevice {
     // (undocumented)
     runNextFrame(f: () => void): void;
     // (undocumented)
+    runNextFrameAsync(f: () => void | Promise<void>): Promise<void>;
+    // (undocumented)
     protected _runningLoop: number;
     // (undocumented)
     screenToDevice(val: number): number;
@@ -342,7 +400,11 @@ export abstract class BaseDevice {
     // (undocumented)
     setFont(fontName: string): void;
     // (undocumented)
-    abstract setFramebuffer(rt: FrameBuffer): void;
+    setFramebuffer(rt: FrameBuffer): any;
+    // (undocumented)
+    setFramebuffer(color: BaseTexture[], depth?: BaseTexture, sampleCount?: number): any;
+    // (undocumented)
+    protected abstract _setFramebuffer(fb: FrameBuffer): any;
     // (undocumented)
     abstract setProgram(program: GPUProgram): void;
     // (undocumented)
@@ -354,11 +416,18 @@ export abstract class BaseDevice {
     // (undocumented)
     abstract setViewport(vp?: number[] | DeviceViewport): void;
     // (undocumented)
+    protected _temporalFramebuffer: boolean;
+    // (undocumented)
     get type(): string;
     // (undocumented)
     updateVideoMemoryCost(delta: number): void;
     // (undocumented)
     get videoMemoryUsage(): number;
+    // (undocumented)
+    get vSync(): boolean;
+    set vSync(val: boolean);
+    // (undocumented)
+    protected _vSync: boolean;
 }
 
 // @public
@@ -394,6 +463,8 @@ export interface BaseTexture<T = unknown> extends GPUObject<T> {
     // (undocumented)
     isSRGBFormat(): boolean;
     // (undocumented)
+    readonly memCost: number;
+    // (undocumented)
     readonly mipLevelCount: number;
     // (undocumented)
     readPixels(x: number, y: number, w: number, h: number, faceOrLayer: number, mipLevel: number, buffer: TypedArray): Promise<void>;
@@ -410,13 +481,17 @@ export interface BaseTexture<T = unknown> extends GPUObject<T> {
 // @public
 export interface BindGroup extends GPUObject<unknown> {
     // (undocumented)
-    getBuffer(name: string): GPUDataBuffer;
+    getBuffer(name: string, nocreate?: boolean): GPUDataBuffer;
+    // (undocumented)
+    getDynamicOffsets(): number[];
+    // (undocumented)
+    getGPUId(): string;
     // (undocumented)
     getLayout(): BindGroupLayout;
     // (undocumented)
     getTexture(name: string): BaseTexture;
     // (undocumented)
-    setBuffer(name: string, buffer: GPUDataBuffer): void;
+    setBuffer(name: string, buffer: GPUDataBuffer, offset?: number, bindOffset?: number, bindSize?: number): void;
     // (undocumented)
     setRawData(name: string, byteOffset: number, data: TypedArray, srcPos?: number, srcLength?: number): any;
     // (undocumented)
@@ -486,6 +561,7 @@ export interface BlendingState {
 
 // @public
 export interface BufferBindingLayout {
+    dynamicOffsetIndex: number;
     hasDynamicOffset: boolean;
     minBindingSize?: number;
     type?: 'uniform' | 'storage' | 'read-only-storage';
@@ -500,7 +576,7 @@ export interface BufferCreationOptions extends BaseCreationOptions {
 }
 
 // @public
-export type BufferUsage = 'vertex' | 'index' | 'uniform' | 'read' | 'write';
+export type BufferUsage = 'vertex' | 'index' | 'uniform' | 'read' | 'write' | 'pack-pixel' | 'unpack-pixel';
 
 // @public
 export interface ColorState {
@@ -543,9 +619,13 @@ export type DataType = 'u8' | 'u8norm' | 'i8' | 'i8norm' | 'u16' | 'u16norm' | '
 export interface DepthState {
     clone(): DepthState;
     compareFunc: CompareFunc;
+    depthBias: number;
+    depthBiasSlopeScale: number;
     enableTest(b: boolean): this;
     enableWrite(b: boolean): this;
     setCompareFunc(func: CompareFunc): this;
+    setDepthBias(value: number): this;
+    setDepthBiasSlopeScale(value: number): this;
     testEnabled: boolean;
     writeEnabled: boolean;
 }
@@ -570,76 +650,18 @@ export interface DeviceCaps {
 
 // @public
 export type DeviceEventMap = {
-    [DeviceResizeEvent.NAME]: DeviceResizeEvent;
-    [DeviceLostEvent.NAME]: DeviceLostEvent;
-    [DeviceRestoreEvent.NAME]: DeviceRestoreEvent;
-    [DeviceGPUObjectAddedEvent.NAME]: DeviceGPUObjectAddedEvent;
-    [DeviceGPUObjectRemovedEvent.NAME]: DeviceGPUObjectRemovedEvent;
-    [DeviceGPUObjectRenameEvent.NAME]: DeviceGPUObjectRenameEvent;
+    resize: [width: number, height: number];
+    devicelost: [];
+    devicerestored: [];
+    gpuobject_added: [obj: GPUObject];
+    gpuobject_removed: [obj: GPUObject];
+    gpuobject_rename: [obj: GPUObject, lastName: string];
 };
-
-// @public
-export class DeviceGPUObjectAddedEvent {
-    constructor(obj: GPUObject);
-    static readonly NAME: "gpuobject_added";
-    // (undocumented)
-    object: GPUObject;
-    // (undocumented)
-    type: "gpuobject_added";
-}
-
-// @public
-export class DeviceGPUObjectRemovedEvent {
-    constructor(obj: GPUObject);
-    static readonly NAME: 'gpuobject_removed';
-    // (undocumented)
-    object: GPUObject;
-    // (undocumented)
-    type: "gpuobject_removed";
-}
-
-// @public
-export class DeviceGPUObjectRenameEvent {
-    constructor(obj: GPUObject, lastName: string);
-    // (undocumented)
-    lastName: string;
-    static readonly NAME: 'gpuobject_rename';
-    // (undocumented)
-    object: GPUObject;
-    // (undocumented)
-    type: "gpuobject_rename";
-}
-
-// @public
-export class DeviceLostEvent {
-    static readonly NAME: "devicelost";
-    // (undocumented)
-    type: "devicelost";
-}
 
 // @public
 export interface DeviceOptions {
     dpr?: number;
     msaa?: boolean;
-}
-
-// @public
-export class DeviceResizeEvent {
-    constructor(width: number, height: number);
-    // (undocumented)
-    height: number;
-    static readonly NAME: "resize";
-    // (undocumented)
-    type: "resize";
-    // (undocumented)
-    width: number;
-}
-
-// @public
-export class DeviceRestoreEvent {
-    static readonly NAME: "devicerestored";
-    // (undocumented)
-    type: "devicerestored";
 }
 
 // @public
@@ -697,9 +719,25 @@ export interface FrameBuffer<T = unknown> extends GPUObject<T> {
     // (undocumented)
     bind(): boolean;
     // (undocumented)
+    getColorAttachment<T extends BaseTexture = BaseTexture>(index: number): T;
+    // (undocumented)
+    getColorAttachmentCubeFace(index: number): CubeFace;
+    // (undocumented)
+    getColorAttachmentGenerateMipmaps(index: number): boolean;
+    // (undocumented)
+    getColorAttachmentLayer(index: number): number;
+    // (undocumented)
+    getColorAttachmentMipLevel(index: number): number;
+    // (undocumented)
     getColorAttachments(): BaseTexture[];
     // (undocumented)
     getDepthAttachment(): BaseTexture;
+    // (undocumented)
+    getDepthAttachmentCubeFace(): CubeFace;
+    // (undocumented)
+    getDepthAttachmentLayer(): number;
+    // (undocumented)
+    getHash(): string;
     // (undocumented)
     getHeight(): number;
     // (undocumented)
@@ -730,6 +768,7 @@ export interface FramebufferCaps {
     supportDepth32floatStencil8: boolean;
     supportFloatBlending: boolean;
     supportMultisampledFramebuffer: boolean;
+    supportRenderMipmap: boolean;
 }
 
 // @public
@@ -783,7 +822,19 @@ export function getTextureFormatBlockSize(format: TextureFormat): number;
 export function getTextureFormatBlockWidth(format: TextureFormat): number;
 
 // @public
+export function getVertexAttribByName(name: VertexSemantic): number;
+
+// @public
 export function getVertexAttribFormat(semantic: VertexSemantic, type: DataType, count: number): VertexAttribFormat;
+
+// @public
+export function getVertexAttribName(attrib: number): VertexSemantic;
+
+// @public
+export function getVertexAttributeFormat(fmt: VertexAttribFormat): "f32" | "i32" | "u32" | "u8norm" | "i8norm" | "u16" | "i16" | "u16norm" | "i16norm" | "f16";
+
+// @public
+export function getVertexAttributeIndex(fmt: VertexAttribFormat): number;
 
 // @public
 export function getVertexBufferAttribType(vertexBufferType: PBStructTypeInfo, attrib: number): PBPrimitiveTypeInfo;
@@ -796,6 +847,12 @@ export function getVertexBufferLength(vertexBufferType: PBStructTypeInfo): numbe
 
 // @public
 export function getVertexBufferStride(vertexBufferType: PBStructTypeInfo): number;
+
+// @public
+export function getVertexFormatComponentCount(fmt: VertexAttribFormat): number;
+
+// @public
+export function getVertexFormatSize(fmt: VertexAttribFormat): number;
 
 // @public
 export class GlyphManager extends TextureAtlasManager {
@@ -813,15 +870,13 @@ export interface GPUDataBuffer<T = unknown> extends GPUObject<T> {
     // (undocumented)
     readonly byteLength: number;
     // (undocumented)
-    getBufferSubData(dstBuffer?: Uint8Array, offsetInBytes?: number, sizeInBytes?: number): Promise<Uint8Array>;
+    getBufferSubData(dstBuffer?: Uint8Array<ArrayBuffer>, offsetInBytes?: number, sizeInBytes?: number): Promise<Uint8Array<ArrayBuffer>>;
     // (undocumented)
     readonly usage: number;
 }
 
 // @public
-export interface GPUObject<T = unknown> extends IEventTarget<{
-    disposed: null;
-}> {
+export interface GPUObject<T = unknown> extends IDisposable {
     // (undocumented)
     readonly cid: number;
     // (undocumented)
@@ -859,11 +914,11 @@ export interface GPUObject<T = unknown> extends IEventTarget<{
     name: string;
     readonly object: T;
     // (undocumented)
-    reload(): Promise<void>;
+    reload(): void;
     // (undocumented)
-    restore(): Promise<void>;
+    restore(): void;
     // (undocumented)
-    restoreHandler: (tex: GPUObject) => Promise<void>;
+    restoreHandler: (tex: GPUObject) => void;
     readonly uid: number;
 }
 
@@ -908,19 +963,23 @@ export enum GPUResourceUsageFlags {
     // (undocumented)
     BF_INDEX = 64,
     // (undocumented)
+    BF_PACK_PIXEL = 2048,
+    // (undocumented)
     BF_READ = 128,
     // (undocumented)
     BF_STORAGE = 1024,
     // (undocumented)
     BF_UNIFORM = 512,
     // (undocumented)
+    BF_UNPACK_PIXEL = 4096,
+    // (undocumented)
     BF_VERTEX = 32,
     // (undocumented)
     BF_WRITE = 256,
     // (undocumented)
-    DYNAMIC = 2048,
+    DYNAMIC = 8192,
     // (undocumented)
-    MANAGED = 4096,
+    MANAGED = 16384,
     // (undocumented)
     TF_LINEAR_COLOR_SPACE = 2,
     // (undocumented)
@@ -991,6 +1050,18 @@ export function linearTextureFormatToSRGB(format: TextureFormat): TextureFormat;
 export function makeVertexBufferType(length: number, ...attributes: VertexAttribFormat[]): PBStructTypeInfo;
 
 // @public
+export function matchVertexBuffer(buffer: StructuredBuffer, name: VertexSemantic): boolean;
+
+// @public (undocumented)
+export const MAX_BINDING_GROUPS = 4;
+
+// @public (undocumented)
+export const MAX_TEXCOORD_INDEX_COUNT = 8;
+
+// @public (undocumented)
+export const MAX_VERTEX_ATTRIBUTES = 16;
+
+// @public
 export interface MiscCaps {
     maxBindGroups: number;
     maxTexCoordIndex: number;
@@ -1019,31 +1090,34 @@ export enum PBAddressSpace {
 export class PBAnyTypeInfo extends PBTypeInfo<null> {
     constructor();
     isAnyType(): this is PBAnyTypeInfo;
-    isCompatibleType(other: PBTypeInfo<TypeDetailInfo>): boolean;
-    toBufferLayout(offset: number): UniformBufferLayout;
+    isCompatibleType(_other: PBTypeInfo<TypeDetailInfo>): boolean;
+    toBufferLayout(_offset: number): UniformBufferLayout;
 }
 
 // @public
 export class PBArrayTypeInfo extends PBTypeInfo<ArrayTypeDetail> {
-    constructor(elementType: PBPrimitiveTypeInfo | PBArrayTypeInfo | PBStructTypeInfo | PBAnyTypeInfo, dimension?: number);
+    constructor(elementType: PBPrimitiveTypeInfo | PBArrayTypeInfo | PBStructTypeInfo | PBAnyTypeInfo | PBAtomicI32TypeInfo | PBAtomicU32TypeInfo, dimension?: number);
     get dimension(): number;
-    get elementType(): PBPrimitiveTypeInfo | PBArrayTypeInfo | PBStructTypeInfo | PBAnyTypeInfo;
+    get elementType(): PBPrimitiveTypeInfo | PBArrayTypeInfo | PBStructTypeInfo | PBAnyTypeInfo | PBAtomicI32TypeInfo | PBAtomicU32TypeInfo;
+    haveAtomicMembers(): boolean;
     isArrayType(): this is PBArrayTypeInfo;
     // (undocumented)
     isCompatibleType(other: PBTypeInfo<TypeDetailInfo>): boolean;
-    toBufferLayout(offset: number): UniformBufferLayout;
+    toBufferLayout(_offset: number): UniformBufferLayout;
 }
 
 // @public
 export class PBAtomicI32TypeInfo extends PBTypeInfo<null> {
     constructor();
-    toBufferLayout(offset: number): UniformBufferLayout;
+    haveAtomicMembers(): boolean;
+    toBufferLayout(_offset: number): UniformBufferLayout;
 }
 
 // @public
 export class PBAtomicU32TypeInfo extends PBTypeInfo<null> {
     constructor();
-    toBufferLayout(offset: number): UniformBufferLayout;
+    haveAtomicMembers(): boolean;
+    toBufferLayout(_offset: number): UniformBufferLayout;
 }
 
 // @public
@@ -1051,7 +1125,7 @@ export interface PBBuiltinScope {
     // (undocumented)
     readonly fragCoord: PBShaderExp;
     // (undocumented)
-    fragDepth: PBShaderExp;
+    fragDepth: PBShaderExp | number;
     // (undocumented)
     readonly frontFacing: PBShaderExp;
     // (undocumented)
@@ -1119,7 +1193,7 @@ export class PBFunctionTypeInfo extends PBTypeInfo<FunctionTypeDetail> {
     }[];
     get name(): string;
     get returnType(): PBTypeInfo;
-    toBufferLayout(offset: number): UniformBufferLayout;
+    toBufferLayout(_offset: number): UniformBufferLayout;
 }
 
 // @public
@@ -1142,7 +1216,8 @@ export class PBInsideFunctionScope extends PBScope {
     $choice(condition: ExpValueNonArrayType, first: ExpValueNonArrayType, second: ExpValueNonArrayType): PBShaderExp;
     $continue(): void;
     $do(body: (this: PBDoWhileScope) => void): PBDoWhileScope;
-    $for(counter: PBShaderExp, init: number | PBShaderExp, end: number | PBShaderExp, body: (this: PBForScope) => void): void;
+    $for(counter: PBShaderExp, init: number | PBShaderExp, end: number | PBShaderExp, open?: boolean | ((this: PBForScope) => void), reverse?: boolean | ((this: PBForScope) => void), body?: (this: PBForScope) => void): void;
+    $getMainScope(): PBFunctionScope;
     $if(condition: ExpValueNonArrayType, body: (this: PBIfScope) => void): PBIfScope;
     $return(retval?: ExpValueType): void;
     $scope(body: (this: PBInsideFunctionScope) => void): PBInsideFunctionScope;
@@ -1170,9 +1245,10 @@ export class PBPointerTypeInfo extends PBTypeInfo<PointerTypeDetail> {
     constructor(pointerType: PBTypeInfo, addressSpace: PBAddressSpace);
     get addressSpace(): PBAddressSpace;
     set addressSpace(val: PBAddressSpace);
+    haveAtomicMembers(): boolean;
     isPointerType(): this is PBPointerTypeInfo;
     get pointerType(): PBTypeInfo;
-    toBufferLayout(offset: number): UniformBufferLayout;
+    toBufferLayout(_offset: number): UniformBufferLayout;
 }
 
 // @public
@@ -1334,7 +1410,7 @@ export class PBPrimitiveTypeInfo extends PBTypeInfo<PrimitiveTypeDetail> {
     resizeType(rows: number, cols: number): PBPrimitiveType;
     get rows(): number;
     get scalarType(): PBPrimitiveType;
-    toBufferLayout(offset: number): UniformBufferLayout;
+    toBufferLayout(_offset: number): UniformBufferLayout;
 }
 
 // @public
@@ -1373,7 +1449,7 @@ export enum PBSamplerAccessMode {
 export class PBSamplerTypeInfo extends PBTypeInfo<SamplerTypeDetail> {
     constructor(accessMode: PBSamplerAccessMode);
     get accessMode(): PBSamplerAccessMode;
-    toBufferLayout(offset: number): UniformBufferLayout;
+    toBufferLayout(_offset: number): UniformBufferLayout;
 }
 
 // @public
@@ -1413,10 +1489,12 @@ export class PBShaderExp extends Proxiable<PBShaderExp> {
     sampleType(type: 'float' | 'unfilterable-float' | 'sint' | 'uint' | 'depth'): PBShaderExp;
     setAt(index: number | PBShaderExp, val: number | boolean | PBShaderExp): void;
     storage(group: number): PBShaderExp;
-    storageBuffer(group: number): PBShaderExp;
+    storageBuffer(group: number, bindingSize?: number): PBShaderExp;
+    storageBufferReadonly(group: number, bindingSize?: number): PBShaderExp;
+    storageReadonly(group: number): PBShaderExp;
     tag(...args: ShaderExpTagValue[]): PBShaderExp;
     uniform(group: number): PBShaderExp;
-    uniformBuffer(group: number): PBShaderExp;
+    uniformBuffer(group: number, bindingSize?: number): PBShaderExp;
     workgroup(): PBShaderExp;
 }
 
@@ -1433,11 +1511,12 @@ export class PBStructTypeInfo extends PBTypeInfo<StructTypeDetail> {
         name: string;
         type: PBPrimitiveTypeInfo | PBArrayTypeInfo | PBStructTypeInfo;
     }[]): PBStructTypeInfo;
+    haveAtomicMembers(): boolean;
     isStructType(): this is PBStructTypeInfo;
     get layout(): PBStructLayout;
     get structMembers(): {
         name: string;
-        type: PBPrimitiveTypeInfo | PBArrayTypeInfo | PBStructTypeInfo | PBAtomicI32TypeInfo | PBAtomicU32TypeInfo;
+        type: PBPrimitiveTypeInfo | PBArrayTypeInfo | PBAtomicI32TypeInfo | PBAtomicU32TypeInfo | PBStructTypeInfo;
         alignment: number;
         size: number;
         defaultAlignment: number;
@@ -1528,14 +1607,17 @@ export class PBTextureTypeInfo extends PBTypeInfo<TextureTypeDetail> {
     isStorageTexture(): boolean;
     isUIntTexture(): boolean;
     get readable(): boolean;
+    set readable(val: boolean);
     get storageTexelFormat(): TextureFormat;
     get textureType(): PBTextureType;
-    toBufferLayout(offset: number): UniformBufferLayout;
+    toBufferLayout(_offset: number): UniformBufferLayout;
     get writable(): boolean;
+    set writable(val: boolean);
 }
 
 // @public
 export abstract class PBTypeInfo<DetailType extends TypeDetailInfo = TypeDetailInfo> {
+    haveAtomicMembers(): boolean;
     isAnyType(): this is PBAnyTypeInfo;
     isArrayType(): this is PBArrayTypeInfo;
     isAtomicI32(): this is PBAtomicI32TypeInfo;
@@ -1555,7 +1637,7 @@ export abstract class PBTypeInfo<DetailType extends TypeDetailInfo = TypeDetailI
 export class PBVoidTypeInfo extends PBTypeInfo<null> {
     constructor();
     isVoidType(): this is PBVoidTypeInfo;
-    toBufferLayout(offset: number): UniformBufferLayout;
+    toBufferLayout(_offset: number): UniformBufferLayout;
 }
 
 // @public
@@ -1566,6 +1648,26 @@ export class PBWhileScope extends PBInsideFunctionScope {
 export interface PointerTypeDetail {
     addressSpace: PBAddressSpace;
     pointerType: PBTypeInfo;
+}
+
+// @public
+export class Pool {
+    constructor(device: AbstractDevice, id: string | symbol, memCostThreshold?: number);
+    // (undocumented)
+    autoRelease(): void;
+    createTemporalFramebuffer(autoRelease: boolean, colorAttachments: BaseTexture[], depthAttachment?: BaseTexture, sampleCount?: number, ignoreDepthStencil?: boolean, attachmentMipLevel?: number, attachmentCubeface?: number, attachmentLayer?: number): FrameBuffer;
+    disposeFrameBuffer(fb: FrameBuffer): void;
+    disposeTexture(texture: BaseTexture): void;
+    fetchTemporalFramebuffer<T extends BaseTexture<unknown>>(autoRelease: boolean, width: number, height: number, colorTexOrFormat: MaybeArray<TextureFormat | T>, depthTexOrFormat?: TextureFormat | T, mipmapping?: boolean, sampleCount?: number, ignoreDepthStencil?: boolean, attachmentMipLevel?: number, attachmentCubeface?: number, attachmentLayer?: number): FrameBuffer;
+    fetchTemporalTexture2D(autoRelease: boolean, format: TextureFormat, width: number, height: number, mipmapping?: boolean): Texture2D;
+    fetchTemporalTexture2DArray(autoRelease: boolean, format: TextureFormat, width: number, height: number, numLayers: number, mipmapping?: boolean): Texture2DArray;
+    fetchTemporalTextureCube(autoRelease: boolean, format: TextureFormat, size: number, mipmapping?: boolean): TextureCube;
+    get id(): string | symbol;
+    purge(): void;
+    releaseFrameBuffer(fb: FrameBuffer): void;
+    releaseTexture(texture: BaseTexture): void;
+    retainFrameBuffer(fb: FrameBuffer): void;
+    retainTexture(texture: BaseTexture): void;
 }
 
 // @public
@@ -1583,7 +1685,7 @@ export interface ProgramBuilder {
     abs(val: number | PBShaderExp): PBShaderExp;
     acos(val: number | PBShaderExp): PBShaderExp;
     acosh(val: number | PBShaderExp): PBShaderExp;
-    add(x: number | PBShaderExp, ...rest: (number | PBShaderExp)[]): any;
+    add(x: number | PBShaderExp, y: number | PBShaderExp, ...rest: (number | PBShaderExp)[]): any;
     add_2(x: number | PBShaderExp, y: number | PBShaderExp): any;
     addressOf(ref: PBShaderExp): PBShaderExp;
     all(x: PBShaderExp): PBShaderExp;
@@ -1596,8 +1698,27 @@ export interface ProgramBuilder {
     atan(val: number | PBShaderExp): PBShaderExp;
     atan2(y: number | PBShaderExp, x: number | PBShaderExp): PBShaderExp;
     atanh(val: number | PBShaderExp): PBShaderExp;
+    atomic_int: {
+        (): PBShaderExp;
+        (rhs: number): PBShaderExp;
+        (rhs: boolean): PBShaderExp;
+        (rhs: PBShaderExp): PBShaderExp;
+        (name: string): PBShaderExp;
+        ptr: ShaderTypeFunc;
+        [dim: number]: ShaderTypeFunc;
+    };
+    atomic_uint: {
+        (): PBShaderExp;
+        (rhs: number): PBShaderExp;
+        (rhs: boolean): PBShaderExp;
+        (rhs: PBShaderExp): PBShaderExp;
+        (name: string): PBShaderExp;
+        ptr: ShaderTypeFunc;
+        [dim: number]: ShaderTypeFunc;
+    };
     atomicAdd(ptr: PBShaderExp, value: number | PBShaderExp): PBShaderExp;
     atomicAnd(ptr: PBShaderExp, value: number | PBShaderExp): PBShaderExp;
+    atomicExchange(ptr: PBShaderExp, value: number | PBShaderExp): PBShaderExp;
     atomicLoad(ptr: PBShaderExp): any;
     atomicMax(ptr: PBShaderExp, value: number | PBShaderExp): PBShaderExp;
     atomicMin(ptr: PBShaderExp, value: number | PBShaderExp): PBShaderExp;
@@ -1826,7 +1947,7 @@ export interface ProgramBuilder {
     min(x: number | PBShaderExp, y: number | PBShaderExp): PBShaderExp;
     mix(x: number | PBShaderExp, y: number | PBShaderExp, z: number | PBShaderExp): PBShaderExp;
     mod(x: number | PBShaderExp, y: number | PBShaderExp): PBShaderExp;
-    mul(x: number | PBShaderExp, ...rest: (number | PBShaderExp)[]): any;
+    mul(x: number | PBShaderExp, y: number | PBShaderExp, ...rest: (number | PBShaderExp)[]): any;
     mul_2(x: number | PBShaderExp, y: number | PBShaderExp): any;
     neg(x: number | PBShaderExp): PBShaderExp;
     normalize(x: PBShaderExp): PBShaderExp;
@@ -2017,6 +2138,9 @@ export interface RasterizerState {
 }
 
 // @public
+export type RenderBundle = unknown;
+
+// @public
 export interface RenderProgramConstructParams {
     bindGroupLayouts: BindGroupLayout[];
     fs: string;
@@ -2028,6 +2152,7 @@ export interface RenderProgramConstructParams {
 export interface RenderStateSet {
     apply(force?: boolean): void;
     readonly blendingState: BlendingState;
+    clone(): RenderStateSet;
     readonly colorState: ColorState;
     copyFrom(stateSet: RenderStateSet): void;
     defaultBlendingState(): void;
@@ -2084,7 +2209,9 @@ export const semanticList: string[];
 
 // @public
 export interface ShaderCaps {
+    maxStorageBufferSize: number;
     maxUniformBufferSize: number;
+    storageBufferOffsetAlignment: number;
     supportFragmentDepth: boolean;
     supportHighPrecisionFloat: boolean;
     supportHighPrecisionInt: boolean;
@@ -2154,7 +2281,7 @@ export interface StencilState {
 export interface StorageTextureBindingLayout {
     access: 'write-only';
     format: TextureFormat;
-    viewDimension: '1d' | '2d';
+    viewDimension: '1d' | '2d' | '2d-array' | 'cube' | 'cube-array' | '3d';
 }
 
 // @public
@@ -2227,8 +2354,8 @@ export type TextureAddressMode = 'repeat' | 'mirrored-repeat' | 'clamp';
 // @public
 export class TextureAtlasManager {
     constructor(device: AbstractDevice, binWidth: number, binHeight: number, rectBorderWidth: number, linearSpace?: boolean);
-    get atlasTextureRestoreHandler(): (tex: BaseTexture) => Promise<void>;
-    set atlasTextureRestoreHandler(f: (tex: BaseTexture) => Promise<void>);
+    get atlasTextureRestoreHandler(): (tex: BaseTexture) => void;
+    set atlasTextureRestoreHandler(f: (tex: BaseTexture) => void);
     clear(): void;
     getAtlasInfo(key: string): AtlasInfo;
     getAtlasTexture(index: number): Texture2D;
@@ -2255,6 +2382,8 @@ export interface TextureCaps {
     npo2Repeating: boolean;
     support3DTexture: boolean;
     supportAnisotropicFiltering: boolean;
+    supportASTC: boolean;
+    supportBPTC: boolean;
     supportDepthTexture: boolean;
     supportFloatBlending: boolean;
     supportFloatColorBuffer: boolean;
@@ -2263,6 +2392,7 @@ export interface TextureCaps {
     supportHalfFloatTexture: boolean;
     supportLinearFloatTexture: boolean;
     supportLinearHalfFloatTexture: boolean;
+    supportRGTC: boolean;
     supportS3TC: boolean;
     supportS3TCSRGB: boolean;
     supportSRGBTexture: boolean;
@@ -2295,13 +2425,16 @@ export interface TextureCube<T = unknown> extends BaseTexture<T> {
 export type TextureFilterMode = 'none' | 'nearest' | 'linear';
 
 // @public
-export type TextureFormat = 'unknown' | 'r8unorm' | 'r8snorm' | 'r16f' | 'r32f' | 'r8ui' | 'r8i' | 'r16ui' | 'r16i' | 'r32ui' | 'r32i' | 'rg8unorm' | 'rg8snorm' | 'rg16f' | 'rg32f' | 'rg8ui' | 'rg8i' | 'rg16ui' | 'rg16i' | 'rg32ui' | 'rg32i' | 'rgba8unorm' | 'rgba8unorm-srgb' | 'rgba8snorm' | 'bgra8unorm' | 'bgra8unorm-srgb' | 'rgba16f' | 'rgba32f' | 'rgba8ui' | 'rgba8i' | 'rgba16ui' | 'rgba16i' | 'rgba32ui' | 'rgba32i' | 'rg11b10uf' | 'd16' | 'd24' | 'd32f' | 'd24s8' | 'd32fs8' | 'dxt1' | 'dxt1-srgb' | 'dxt3' | 'dxt3-srgb' | 'dxt5' | 'dxt5-srgb';
+export type TextureFormat = 'unknown' | 'r8unorm' | 'r8snorm' | 'r16f' | 'r32f' | 'r8ui' | 'r8i' | 'r16ui' | 'r16i' | 'r32ui' | 'r32i' | 'rg8unorm' | 'rg8snorm' | 'rg16f' | 'rg32f' | 'rg8ui' | 'rg8i' | 'rg16ui' | 'rg16i' | 'rg32ui' | 'rg32i' | 'rgba8unorm' | 'rgba8unorm-srgb' | 'rgba8snorm' | 'bgra8unorm' | 'bgra8unorm-srgb' | 'rgba16f' | 'rgba32f' | 'rgba8ui' | 'rgba8i' | 'rgba16ui' | 'rgba16i' | 'rgba32ui' | 'rgba32i' | 'rg11b10uf' | 'd16' | 'd24' | 'd32f' | 'd24s8' | 'd32fs8' | 'dxt1' | 'dxt1-srgb' | 'dxt3' | 'dxt3-srgb' | 'dxt5' | 'dxt5-srgb' | 'bc4' | 'bc4-signed' | 'bc5' | 'bc5-signed' | 'bc7' | 'bc7-srgb' | 'bc6h' | 'bc6h-signed' | 'astc-4x4' | 'astc-4x4-srgb' | 'astc-5x4' | 'astc-5x4-srgb' | 'astc-5x5' | 'astc-5x5-srgb' | 'astc-6x5' | 'astc-6x5-srgb' | 'astc-6x6' | 'astc-6x6-srgb' | 'astc-8x5' | 'astc-8x5-srgb' | 'astc-8x6' | 'astc-8x6-srgb' | 'astc-8x8' | 'astc-8x8-srgb' | 'astc-10x5' | 'astc-10x5-srgb' | 'astc-10x6' | 'astc-10x6-srgb' | 'astc-10x8' | 'astc-10x8-srgb' | 'astc-10x10' | 'astc-10x10-srgb' | 'astc-12x10' | 'astc-12x10-srgb' | 'astc-12x12' | 'astc-12x12-srgb';
 
 // @public
 export interface TextureFormatInfo {
+    blockHeight: number;
+    blockWidth: number;
     compressed: boolean;
     filterable: boolean;
     renderable: boolean;
+    size: number;
 }
 
 // @public
@@ -2391,8 +2524,50 @@ export interface UniformLayout {
     type: PBPrimitiveType;
 }
 
+// @public (undocumented)
+export const VERTEX_ATTRIB_BLEND_INDICES = 13;
+
+// @public (undocumented)
+export const VERTEX_ATTRIB_BLEND_WEIGHT = 12;
+
+// @public (undocumented)
+export const VERTEX_ATTRIB_DIFFUSE = 2;
+
+// @public (undocumented)
+export const VERTEX_ATTRIB_NORMAL = 1;
+
+// @public (undocumented)
+export const VERTEX_ATTRIB_POSITION = 0;
+
+// @public (undocumented)
+export const VERTEX_ATTRIB_TANGENT = 3;
+
+// @public (undocumented)
+export const VERTEX_ATTRIB_TEXCOORD0 = 4;
+
+// @public (undocumented)
+export const VERTEX_ATTRIB_TEXCOORD1 = 5;
+
+// @public (undocumented)
+export const VERTEX_ATTRIB_TEXCOORD2 = 6;
+
+// @public (undocumented)
+export const VERTEX_ATTRIB_TEXCOORD3 = 7;
+
+// @public (undocumented)
+export const VERTEX_ATTRIB_TEXCOORD4 = 8;
+
+// @public (undocumented)
+export const VERTEX_ATTRIB_TEXCOORD5 = 9;
+
+// @public (undocumented)
+export const VERTEX_ATTRIB_TEXCOORD6 = 10;
+
+// @public (undocumented)
+export const VERTEX_ATTRIB_TEXCOORD7 = 11;
+
 // @public
-export type VertexAttribFormat = 'position_u8normx2' | 'position_u8normx4' | 'position_i8normx2' | 'position_i8normx4' | 'position_u16x2' | 'position_u16x4' | 'position_i16x2' | 'position_i16x4' | 'position_u16normx2' | 'position_u16normx4' | 'position_i16normx2' | 'position_i16normx4' | 'position_f16x2' | 'position_f16x4' | 'position_f32' | 'position_f32x2' | 'position_f32x3' | 'position_f32x4' | 'position_i32' | 'position_i32x2' | 'position_i32x3' | 'position_i32x4' | 'position_u32' | 'position_u32x2' | 'position_u32x3' | 'position_u32x4' | 'normal_f16x4' | 'normal_f32x3' | 'normal_f32x4' | 'diffuse_u8normx4' | 'diffuse_u16x4' | 'diffuse_u16normx4' | 'diffuse_f16x4' | 'diffuse_f32x3' | 'diffuse_f32x4' | 'diffuse_u32x3' | 'diffuse_u32x4' | 'tangent_f16x4' | 'tangent_f32x3' | 'tangent_f32x4' | 'tex0_u8normx2' | 'tex0_u8normx4' | 'tex0_i8normx2' | 'tex0_i8normx4' | 'tex0_u16x2' | 'tex0_u16x4' | 'tex0_i16x2' | 'tex0_i16x4' | 'tex0_u16normx2' | 'tex0_u16normx4' | 'tex0_i16normx2' | 'tex0_i16normx4' | 'tex0_f16x2' | 'tex0_f16x4' | 'tex0_f32' | 'tex0_f32x2' | 'tex0_f32x3' | 'tex0_f32x4' | 'tex0_i32' | 'tex0_i32x2' | 'tex0_i32x3' | 'tex0_i32x4' | 'tex0_u32' | 'tex0_u32x2' | 'tex0_u32x3' | 'tex0_u32x4' | 'tex1_u8normx2' | 'tex1_u8normx4' | 'tex1_i8normx2' | 'tex1_i8normx4' | 'tex1_u16x2' | 'tex1_u16x4' | 'tex1_i16x2' | 'tex1_i16x4' | 'tex1_u16normx2' | 'tex1_u16normx4' | 'tex1_i16normx2' | 'tex1_i16normx4' | 'tex1_f16x2' | 'tex1_f16x4' | 'tex1_f32' | 'tex1_f32x2' | 'tex1_f32x3' | 'tex1_f32x4' | 'tex1_i32' | 'tex1_i32x2' | 'tex1_i32x3' | 'tex1_i32x4' | 'tex1_u32' | 'tex1_u32x2' | 'tex1_u32x3' | 'tex1_u32x4' | 'tex2_u8normx2' | 'tex2_u8normx4' | 'tex2_i8normx2' | 'tex2_i8normx4' | 'tex2_u16x2' | 'tex2_u16x4' | 'tex2_i16x2' | 'tex2_i16x4' | 'tex2_u16normx2' | 'tex2_u16normx4' | 'tex2_i16normx2' | 'tex2_i16normx4' | 'tex2_f16x2' | 'tex2_f16x4' | 'tex2_f32' | 'tex2_f32x2' | 'tex2_f32x3' | 'tex2_f32x4' | 'tex2_i32' | 'tex2_i32x2' | 'tex2_i32x3' | 'tex2_i32x4' | 'tex2_u32' | 'tex2_u32x2' | 'tex2_u32x3' | 'tex2_u32x4' | 'tex3_u8normx2' | 'tex3_u8normx4' | 'tex3_i8normx2' | 'tex3_i8normx4' | 'tex3_u16x2' | 'tex3_u16x4' | 'tex3_i16x2' | 'tex3_i16x4' | 'tex3_u16normx2' | 'tex3_u16normx4' | 'tex3_i16normx2' | 'tex3_i16normx4' | 'tex3_f16x2' | 'tex3_f16x4' | 'tex3_f32' | 'tex3_f32x2' | 'tex3_f32x3' | 'tex3_f32x4' | 'tex3_i32' | 'tex3_i32x2' | 'tex3_i32x3' | 'tex3_i32x4' | 'tex3_u32' | 'tex3_u32x2' | 'tex3_u32x3' | 'tex3_u32x4' | 'tex4_u8normx2' | 'tex4_u8normx4' | 'tex4_i8normx2' | 'tex4_i8normx4' | 'tex4_u16x2' | 'tex4_u16x4' | 'tex4_i16x2' | 'tex4_i16x4' | 'tex4_u16normx2' | 'tex4_u16normx4' | 'tex4_i16normx2' | 'tex4_i16normx4' | 'tex4_f16x2' | 'tex4_f16x4' | 'tex4_f32' | 'tex4_f32x2' | 'tex4_f32x3' | 'tex4_f32x4' | 'tex4_i32' | 'tex4_i32x2' | 'tex4_i32x3' | 'tex4_i32x4' | 'tex4_u32' | 'tex4_u32x2' | 'tex4_u32x3' | 'tex4_u32x4' | 'tex5_u8normx2' | 'tex5_u8normx4' | 'tex5_i8normx2' | 'tex5_i8normx4' | 'tex5_u16x2' | 'tex5_u16x4' | 'tex5_i16x2' | 'tex5_i16x4' | 'tex5_u16normx2' | 'tex5_u16normx4' | 'tex5_i16normx2' | 'tex5_i16normx4' | 'tex5_f16x2' | 'tex5_f16x4' | 'tex5_f32' | 'tex5_f32x2' | 'tex5_f32x3' | 'tex5_f32x4' | 'tex5_i32' | 'tex5_i32x2' | 'tex5_i32x3' | 'tex5_i32x4' | 'tex5_u32' | 'tex5_u32x2' | 'tex5_u32x3' | 'tex5_u32x4' | 'tex6_u8normx2' | 'tex6_u8normx4' | 'tex6_i8normx2' | 'tex6_i8normx4' | 'tex6_u16x2' | 'tex6_u16x4' | 'tex6_i16x2' | 'tex6_i16x4' | 'tex6_u16normx2' | 'tex6_u16normx4' | 'tex6_i16normx2' | 'tex6_i16normx4' | 'tex6_f16x2' | 'tex6_f16x4' | 'tex6_f32' | 'tex6_f32x2' | 'tex6_f32x3' | 'tex6_f32x4' | 'tex6_i32' | 'tex6_i32x2' | 'tex6_i32x3' | 'tex6_i32x4' | 'tex6_u32' | 'tex6_u32x2' | 'tex6_u32x3' | 'tex6_u32x4' | 'tex7_u8normx2' | 'tex7_u8normx4' | 'tex7_i8normx2' | 'tex7_i8normx4' | 'tex7_u16x2' | 'tex7_u16x4' | 'tex7_i16x2' | 'tex7_i16x4' | 'tex7_u16normx2' | 'tex7_u16normx4' | 'tex7_i16normx2' | 'tex7_i16normx4' | 'tex7_f16x2' | 'tex7_f16x4' | 'tex7_f32' | 'tex7_f32x2' | 'tex7_f32x3' | 'tex7_f32x4' | 'tex7_i32' | 'tex7_i32x2' | 'tex7_i32x3' | 'tex7_i32x4' | 'tex7_u32' | 'tex7_u32x2' | 'tex7_u32x3' | 'tex7_u32x4' | 'blendweights_f16x4' | 'blendweights_f32x4' | 'blendindices_u16x4' | 'blendindices_f16x4' | 'blendindices_f32x4' | 'blendindices_u32x4';
+export type VertexAttribFormat = 'position_u8normx2' | 'position_u8normx4' | 'position_i8normx2' | 'position_i8normx4' | 'position_u16x2' | 'position_u16x4' | 'position_i16x2' | 'position_i16x4' | 'position_u16normx2' | 'position_u16normx4' | 'position_i16normx2' | 'position_i16normx4' | 'position_f16x2' | 'position_f16x4' | 'position_f32' | 'position_f32x2' | 'position_f32x3' | 'position_f32x4' | 'position_i32' | 'position_i32x2' | 'position_i32x3' | 'position_i32x4' | 'position_u32' | 'position_u32x2' | 'position_u32x3' | 'position_u32x4' | 'normal_f16x4' | 'normal_f32x3' | 'normal_f32x4' | 'diffuse_u8normx4' | 'diffuse_u16x4' | 'diffuse_u16normx4' | 'diffuse_f16x4' | 'diffuse_f32x3' | 'diffuse_f32x4' | 'diffuse_u32x3' | 'diffuse_u32x4' | 'tangent_f16x4' | 'tangent_f32x3' | 'tangent_f32x4' | 'tex0_u8normx2' | 'tex0_u8normx4' | 'tex0_i8normx2' | 'tex0_i8normx4' | 'tex0_u16x2' | 'tex0_u16x4' | 'tex0_i16x2' | 'tex0_i16x4' | 'tex0_u16normx2' | 'tex0_u16normx4' | 'tex0_i16normx2' | 'tex0_i16normx4' | 'tex0_f16x2' | 'tex0_f16x4' | 'tex0_f32' | 'tex0_f32x2' | 'tex0_f32x3' | 'tex0_f32x4' | 'tex0_i32' | 'tex0_i32x2' | 'tex0_i32x3' | 'tex0_i32x4' | 'tex0_u32' | 'tex0_u32x2' | 'tex0_u32x3' | 'tex0_u32x4' | 'tex1_u8normx2' | 'tex1_u8normx4' | 'tex1_i8normx2' | 'tex1_i8normx4' | 'tex1_u16x2' | 'tex1_u16x4' | 'tex1_i16x2' | 'tex1_i16x4' | 'tex1_u16normx2' | 'tex1_u16normx4' | 'tex1_i16normx2' | 'tex1_i16normx4' | 'tex1_f16x2' | 'tex1_f16x4' | 'tex1_f32' | 'tex1_f32x2' | 'tex1_f32x3' | 'tex1_f32x4' | 'tex1_i32' | 'tex1_i32x2' | 'tex1_i32x3' | 'tex1_i32x4' | 'tex1_u32' | 'tex1_u32x2' | 'tex1_u32x3' | 'tex1_u32x4' | 'tex2_u8normx2' | 'tex2_u8normx4' | 'tex2_i8normx2' | 'tex2_i8normx4' | 'tex2_u16x2' | 'tex2_u16x4' | 'tex2_i16x2' | 'tex2_i16x4' | 'tex2_u16normx2' | 'tex2_u16normx4' | 'tex2_i16normx2' | 'tex2_i16normx4' | 'tex2_f16x2' | 'tex2_f16x4' | 'tex2_f32' | 'tex2_f32x2' | 'tex2_f32x3' | 'tex2_f32x4' | 'tex2_i32' | 'tex2_i32x2' | 'tex2_i32x3' | 'tex2_i32x4' | 'tex2_u32' | 'tex2_u32x2' | 'tex2_u32x3' | 'tex2_u32x4' | 'tex3_u8normx2' | 'tex3_u8normx4' | 'tex3_i8normx2' | 'tex3_i8normx4' | 'tex3_u16x2' | 'tex3_u16x4' | 'tex3_i16x2' | 'tex3_i16x4' | 'tex3_u16normx2' | 'tex3_u16normx4' | 'tex3_i16normx2' | 'tex3_i16normx4' | 'tex3_f16x2' | 'tex3_f16x4' | 'tex3_f32' | 'tex3_f32x2' | 'tex3_f32x3' | 'tex3_f32x4' | 'tex3_i32' | 'tex3_i32x2' | 'tex3_i32x3' | 'tex3_i32x4' | 'tex3_u32' | 'tex3_u32x2' | 'tex3_u32x3' | 'tex3_u32x4' | 'tex4_u8normx2' | 'tex4_u8normx4' | 'tex4_i8normx2' | 'tex4_i8normx4' | 'tex4_u16x2' | 'tex4_u16x4' | 'tex4_i16x2' | 'tex4_i16x4' | 'tex4_u16normx2' | 'tex4_u16normx4' | 'tex4_i16normx2' | 'tex4_i16normx4' | 'tex4_f16x2' | 'tex4_f16x4' | 'tex4_f32' | 'tex4_f32x2' | 'tex4_f32x3' | 'tex4_f32x4' | 'tex4_i32' | 'tex4_i32x2' | 'tex4_i32x3' | 'tex4_i32x4' | 'tex4_u32' | 'tex4_u32x2' | 'tex4_u32x3' | 'tex4_u32x4' | 'tex5_u8normx2' | 'tex5_u8normx4' | 'tex5_i8normx2' | 'tex5_i8normx4' | 'tex5_u16x2' | 'tex5_u16x4' | 'tex5_i16x2' | 'tex5_i16x4' | 'tex5_u16normx2' | 'tex5_u16normx4' | 'tex5_i16normx2' | 'tex5_i16normx4' | 'tex5_f16x2' | 'tex5_f16x4' | 'tex5_f32' | 'tex5_f32x2' | 'tex5_f32x3' | 'tex5_f32x4' | 'tex5_i32' | 'tex5_i32x2' | 'tex5_i32x3' | 'tex5_i32x4' | 'tex5_u32' | 'tex5_u32x2' | 'tex5_u32x3' | 'tex5_u32x4' | 'tex6_u8normx2' | 'tex6_u8normx4' | 'tex6_i8normx2' | 'tex6_i8normx4' | 'tex6_u16x2' | 'tex6_u16x4' | 'tex6_i16x2' | 'tex6_i16x4' | 'tex6_u16normx2' | 'tex6_u16normx4' | 'tex6_i16normx2' | 'tex6_i16normx4' | 'tex6_f16x2' | 'tex6_f16x4' | 'tex6_f32' | 'tex6_f32x2' | 'tex6_f32x3' | 'tex6_f32x4' | 'tex6_i32' | 'tex6_i32x2' | 'tex6_i32x3' | 'tex6_i32x4' | 'tex6_u32' | 'tex6_u32x2' | 'tex6_u32x3' | 'tex6_u32x4' | 'tex7_u8normx2' | 'tex7_u8normx4' | 'tex7_i8normx2' | 'tex7_i8normx4' | 'tex7_u16x2' | 'tex7_u16x4' | 'tex7_i16x2' | 'tex7_i16x4' | 'tex7_u16normx2' | 'tex7_u16normx4' | 'tex7_i16normx2' | 'tex7_i16normx4' | 'tex7_f16x2' | 'tex7_f16x4' | 'tex7_f32' | 'tex7_f32x2' | 'tex7_f32x3' | 'tex7_f32x4' | 'tex7_i32' | 'tex7_i32x2' | 'tex7_i32x3' | 'tex7_i32x4' | 'tex7_u32' | 'tex7_u32x2' | 'tex7_u32x3' | 'tex7_u32x4' | 'blendweights_f16x1' | 'blendweights_f32x1' | 'blendweights_f16x2' | 'blendweights_f32x2' | 'blendweights_f16x3' | 'blendweights_f32x3' | 'blendweights_f16x4' | 'blendweights_f32x4' | 'blendindices_f16x1' | 'blendindices_u16x1' | 'blendindices_f32x1' | 'blendindices_u32x1' | 'blendindices_f16x2' | 'blendindices_u16x2' | 'blendindices_f32x2' | 'blendindices_u32x2' | 'blendindices_f16x3' | 'blendindices_u16x3' | 'blendindices_f32x3' | 'blendindices_u32x3' | 'blendindices_f16x4' | 'blendindices_u16x4' | 'blendindices_f32x4' | 'blendindices_u32x4';
 
 // @public
 export type VertexBufferInfo = {
@@ -2412,7 +2587,7 @@ export class VertexData {
     getIndexBuffer(): IndexBuffer;
     getVertexBuffer(semantic: VertexSemantic): StructuredBuffer;
     getVertexBufferInfo(semantic: VertexSemantic): VertexBufferInfo;
-    get indexBuffer(): IndexBuffer<unknown>;
+    get indexBuffer(): IndexBuffer;
     removeVertexBuffer(buffer: StructuredBuffer): boolean;
     // (undocumented)
     setDrawOffset(offset: number): void;

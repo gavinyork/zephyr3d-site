@@ -6,7 +6,7 @@
 
   **注意，使用@zephyr3d/scene框架的项目必需有且只有一个应用实例!**
 
-  当一个应用被创建以后，可以使用 ```Application.instance``` 静态属性来获取全局应用实例。
+  当一个应用被创建以后，可以使用 [getApp](/doc/markdown/./scene.getapp) 全局函数来获取全局应用实例。
 
   ```javascript
   import { Application } from '@zephyr3d/scene';
@@ -141,10 +141,10 @@
   都返回false，则通过```Application.on```注册的事件回调将被调用。下面是一个使用中间件的例子：
 
   ```javascript
-  app.inputManager.use(function(evt, type){
+  getInput().use(function(evt, type){
     return processGUIEvent(evt, type);
   });
-  app.inputManager.use(function(evt, type){
+  getInput().use(function(evt, type){
     if(type === 'pointerdown') {
       onPointerDown();
       return true;
@@ -184,8 +184,8 @@
     // 创建相机
     const camera = new PerspectiveCamera(scene, Math.PI/3, myApp.device.canvas.width/myApp.device.canvas.height, 1, 100);
     // 当缓冲区大小发生变化时重新设置相机长宽比以避免图像变形
-    myApp.on('resize', function(ev){
-      camera.aspect = ev.width / ev.height;
+    myApp.on('resize', function(width, height){
+      camera.aspect = width / height;
     });
     // 添加帧事件处理
     myApp.on('tick', function(){
@@ -201,30 +201,6 @@
   运行这段代码，我们渲染了一个空的场景，里面仅包含了一个默认的天空，效果如下：
 
   <div class="showcase" case="tut-2"></div>
-
-## 色调映射
-
-  刚才我们渲染的天空的色调看起来有些奇怪，这是因为模拟大气散射的天空需要经过色调映射(Tonemapping)才能得到正确的视觉效果。
-  下面我们来添加一个色调映射后处理。
-
-  ```javascript
-
-  // 创建一个compositor
-  const compositor = new Compositor();
-  // 添加一个Tonemap后处理效果
-  compositor.appendPostEffect(new Tonemap());
-
-  // ...
-
-  // 将compositor作为第二个参数传递给摄像机的render方法
-  camera.render(scene, compositor);
-
-  ```
-
-  下面是添加了色调映射的效果：
-
-
-  <div class="showcase" case="tut-3"></div>
 
 ## 摄像机控制
 
@@ -256,7 +232,7 @@
   //...
 
   // 添加一个中间件用于更新摄像机控制器
-  app.inputManager.use(camera.handleEvent.bind(camera));
+  getInput().use(camera.handleEvent.bind(camera));
 
   //...
 

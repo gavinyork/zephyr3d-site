@@ -1,5 +1,15 @@
 import { Vector3 } from '@zephyr3d/base';
-import { Scene, OrbitCameraController, DirectionalLight, PBRMetallicRoughnessMaterial, Mesh, Application, PerspectiveCamera, BoxShape } from '@zephyr3d/scene';
+import {
+  Scene,
+  OrbitCameraController,
+  DirectionalLight,
+  PBRMetallicRoughnessMaterial,
+  Mesh,
+  Application,
+  PerspectiveCamera,
+  BoxShape,
+  getInput
+} from '@zephyr3d/scene';
 import { backendWebGL2 } from '@zephyr3d/backend-webgl';
 
 const myApp = new Application({
@@ -15,7 +25,7 @@ myApp.ready().then(async () => {
   // Create a directional light
   const dirLight = new DirectionalLight(scene);
   // light direction
-  dirLight.rotation.fromEulerAngle(-Math.PI/4, Math.PI/4, 0, 'ZYX');
+  dirLight.rotation.fromEulerAngle(-Math.PI / 4, Math.PI / 4, 0);
   // Enable shadowing
   dirLight.castShadow = true;
   // 4 cascade levels
@@ -31,7 +41,7 @@ myApp.ready().then(async () => {
   const box = new BoxShape();
   const floor = new Mesh(scene, box);
   floor.scale.setXYZ(2000, 10, 2000);
-  floor.position.setXYZ(-1000, -10, -1000);
+  floor.position.setXYZ(0, -5, 0);
   floor.material = material;
 
   for (let i = -40; i <= 40; i++) {
@@ -46,15 +56,21 @@ myApp.ready().then(async () => {
   }
 
   // Create camera
-  const camera = new PerspectiveCamera(scene, Math.PI/3, myApp.device.canvas.width/myApp.device.canvas.height, 1, 600);
+  const camera = new PerspectiveCamera(
+    scene,
+    Math.PI / 3,
+    myApp.device.canvas.width / myApp.device.canvas.height,
+    1,
+    600
+  );
   camera.lookAt(new Vector3(0, 8, 30), new Vector3(0, 8, 0), Vector3.axisPY());
   camera.controller = new OrbitCameraController({ center: new Vector3(0, 8, 0) });
 
-  myApp.inputManager.use(camera.handleEvent.bind(camera));
+  getInput().use(camera.handleEvent.bind(camera));
 
   myApp.on('tick', () => {
     // light rotation
-    dirLight.rotation.fromEulerAngle(-Math.PI/4, myApp.device.frameInfo.elapsedOverall * 0.0005, 0, 'ZYX');
+    dirLight.rotation.fromEulerAngle(-Math.PI / 4, myApp.device.frameInfo.elapsedOverall * 0.0005, 0);
     camera.updateController();
 
     camera.render(scene);

@@ -1,9 +1,7 @@
-import { Application, Scene } from '@zephyr3d/scene';
+import { Application, getDevice, Scene } from '@zephyr3d/scene';
 import { GLTFViewer } from './gltfviewer';
-import { Vector3 } from '@zephyr3d/base';
 import { backendWebGL2, backendWebGL1 } from '@zephyr3d/backend-webgl';
 import { backendWebGPU } from '@zephyr3d/backend-webgpu';
-import { imGuiInit, imGuiInjectEvent } from '@zephyr3d/imgui';
 import type { DeviceBackend } from '@zephyr3d/device';
 
 function getQueryString(name: string) {
@@ -36,12 +34,11 @@ const gltfApp = new Application({
 });
 
 gltfApp.ready().then(async () => {
-  await imGuiInit(gltfApp.device);
-  gltfApp.inputManager.use(imGuiInjectEvent);
+  console.log(gltfApp.device.getAdapterInfo());
   const scene = new Scene();
-  scene.env.sky.fogType = 'exp';
   const gltfViewer = new GLTFViewer(scene);
-  gltfApp.inputManager.use(gltfViewer.camera.handleEvent.bind(gltfViewer.camera));
+  await gltfViewer.ready();
+  gltfViewer.loadModel('./assets/models/DamagedHelmet.glb');
   gltfApp.on('drop', (ev) => {
     ev.preventDefault();
     ev.stopPropagation();
@@ -49,47 +46,32 @@ gltfApp.ready().then(async () => {
       gltfViewer.handleDrop(ev.dataTransfer);
     }
   });
-  let movingSun = 0;
-  Application.instance.device.canvas.addEventListener('contextmenu', function (ev) {
+  getDevice().canvas.addEventListener('contextmenu', function (ev) {
     ev.preventDefault();
     return false;
   });
-  gltfApp.on('pointermove', (ev) => {
-    if (movingSun) {
-      const viewport = Application.instance.device.getViewport();
-      const ray = scene.constructRay(
-        gltfViewer.camera,
-        viewport.width,
-        viewport.height,
-        ev.offsetX,
-        ev.offsetY
-      );
-      gltfViewer.light0.lookAt(ray.direction, Vector3.zero(), Vector3.axisPY());
+  gltfApp.on('resize', (width, height) => {
+    gltfViewer.camera.aspect = width / height;
+  });
+  gltfApp.on('keyup', (ev) => {
+    console.log(ev.code);
+    if (ev.code === 'KeyB') {
+      gltfViewer.nextBackground();
+    } else if (ev.code === 'KeyN') {
+      gltfViewer.toggleScatter();
+    } else if (ev.code === 'KeyF') {
+      gltfViewer.toggleFloor();
+    } else if (ev.code === 'KeyT') {
+      gltfViewer.toggleGUI();
+    } else if (ev.code === 'KeyR') {
+      gltfViewer.enableRotate(!gltfViewer.rotateEnabled());
+    } else if (ev.code === 'KeyL') {
+      gltfViewer.randomLightDir();
+    } else if (ev.code === 'KeyP') {
+      gltfViewer.toggleShadow();
     }
   });
-  gltfApp.on('pointerdown', (ev) => {
-    if (ev.button === 2) {
-      const viewport = Application.instance.device.getViewport();
-      const ray = scene.constructRay(
-        gltfViewer.camera,
-        viewport.width,
-        viewport.height,
-        ev.offsetX,
-        ev.offsetY
-      );
-      gltfViewer.light0.lookAt(ray.direction, Vector3.zero(), Vector3.axisPY());
-      movingSun = 1;
-    }
-  });
-  gltfApp.on('pointerup', (ev) => {
-    if (ev.button === 2) {
-      movingSun = 0;
-    }
-  });
-  gltfApp.on('resize', (ev) => {
-    gltfViewer.camera.aspect = ev.width / ev.height;
-  });
-  gltfApp.on('tick', (ev) => {
+  gltfApp.on('tick', () => {
     gltfViewer.camera.updateController();
     gltfViewer.render();
   });

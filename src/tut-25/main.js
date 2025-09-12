@@ -1,5 +1,16 @@
 import { Vector3 } from '@zephyr3d/base';
-import { Scene, OrbitCameraController, Application, PerspectiveCamera, LambertMaterial, AnimationSet, AnimationClip, TranslationTrack, BoxShape, Mesh, EulerRotationTrack } from '@zephyr3d/scene';
+import {
+  Scene,
+  OrbitCameraController,
+  Application,
+  PerspectiveCamera,
+  LambertMaterial,
+  NodeTranslationTrack,
+  BoxShape,
+  Mesh,
+  NodeEulerRotationTrack,
+  getInput
+} from '@zephyr3d/scene';
 import { backendWebGL2 } from '@zephyr3d/backend-webgl';
 
 const myApp = new Application({
@@ -10,34 +21,53 @@ const myApp = new Application({
 myApp.ready().then(async () => {
   const scene = new Scene();
 
-  const box = new Mesh(scene, new BoxShape({ anchorX: 0.5, anchorY: 0.5, anchorZ: 0.5 }), new LambertMaterial())
-  const animationSet = new AnimationSet(scene);
-  const animationClip = new AnimationClip('move');
-  animationClip.addTrack(box, new TranslationTrack('linear', [{
-    time: 0,
-    value: new Vector3(0, 0, 0)
-  }, {
-    time: 1,
-    value: new Vector3(0, 3, 0)
-  }, {
-    time: 2,
-    value: new Vector3(0, 0, 0)
-  }])).addTrack(box, new EulerRotationTrack('linear', [{
-    time: 0,
-    value: new Vector3(0, 0, 0)
-  }, {
-    time: 2,
-    value: new Vector3(0, 8 * Math.PI, 0)
-  }]));
-  animationSet.add(animationClip);
-  animationSet.playAnimation('move', 0);
+  const box = new Mesh(scene, new BoxShape(), new LambertMaterial());
+  const animationClip = box.animationSet.createAnimation('move');
+  animationClip
+    .addTrack(
+      box,
+      new NodeTranslationTrack('linear', [
+        {
+          time: 0,
+          value: new Vector3(0, 0, 0)
+        },
+        {
+          time: 1,
+          value: new Vector3(0, 3, 0)
+        },
+        {
+          time: 2,
+          value: new Vector3(0, 0, 0)
+        }
+      ])
+    )
+    .addTrack(
+      box,
+      new NodeEulerRotationTrack('linear', [
+        {
+          time: 0,
+          value: new Vector3(0, 0, 0)
+        },
+        {
+          time: 2,
+          value: new Vector3(0, 8 * Math.PI, 0)
+        }
+      ])
+    );
+  box.animationSet.playAnimation('move');
 
   // Create camera
-  const camera = new PerspectiveCamera(scene, Math.PI/3, myApp.device.canvas.width/myApp.device.canvas.height, 1, 600);
+  const camera = new PerspectiveCamera(
+    scene,
+    Math.PI / 3,
+    myApp.device.canvas.width / myApp.device.canvas.height,
+    1,
+    600
+  );
   camera.lookAt(new Vector3(0, 3, 8), Vector3.zero(), Vector3.axisPY());
   camera.controller = new OrbitCameraController();
 
-  myApp.inputManager.use(camera.handleEvent.bind(camera));
+  getInput().use(camera.handleEvent.bind(camera));
 
   myApp.on('tick', () => {
     camera.updateController();

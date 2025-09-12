@@ -1,18 +1,43 @@
-import { ImGui, imGuiEndFrame, imGuiNewFrame } from "@zephyr3d/imgui";
-import { Application } from "@zephyr3d/scene";
+import { getDevice } from '@zephyr3d/scene';
+import { GUI } from 'lil-gui';
 
-export class UI {
-  render(){
-    imGuiNewFrame();
-    this.renderStatusBar();
-    imGuiEndFrame();
+interface GUIParams {
+  deviceType: string;
+}
+
+export class Panel {
+  private readonly _deviceList: string[];
+  private readonly _params: GUIParams;
+  private readonly _gui: GUI;
+  constructor() {
+    this._deviceList = ['WebGL', 'WebGL2', 'WebGPU'];
+    this._params = {
+      deviceType:
+        this._deviceList[this._deviceList.findIndex((val) => val.toLowerCase() === getDevice().type)]
+    };
+    this._gui = new GUI({ container: document.body });
+    this.create();
   }
-  private renderStatusBar() {
-    if (ImGui.BeginStatusBar()) {
-      ImGui.Text(`Device: ${Application.instance.device.type}`);
-      ImGui.Text(`FPS: ${Application.instance.device.frameInfo.FPS.toFixed(2)}`);
-      ImGui.Text(`DrawCall: ${Application.instance.device.frameInfo.drawCalls}`);
-      ImGui.EndStatusBar();
-    }
+  create() {
+    const desc1 = document.createElement('p');
+    desc1.style.marginTop = '1.5rem';
+    desc1.style.padding = '0.5rem';
+    desc1.style.color = '#ffff00';
+    desc1.innerText = 'Move with W/S/A/D keys.';
+    const desc2 = document.createElement('p');
+    desc2.style.marginBottom = '1rem';
+    desc2.style.padding = '0.5rem';
+    desc2.style.color = '#ffff00';
+    desc2.innerText = 'Rotate with left mouse button.';
+    this._gui.domElement.append(desc1, desc2);
+    const systemSettings = this._gui.addFolder('System');
+    systemSettings
+      .add(this._params, 'deviceType', this._deviceList)
+      .name('Select device')
+      .onChange((value) => {
+        const url = new URL(window.location.href);
+        url.searchParams.set('dev', value.toLowerCase());
+        window.location.href = url.href;
+      });
   }
 }

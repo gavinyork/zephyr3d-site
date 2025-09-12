@@ -1,5 +1,15 @@
 import { Vector3, Vector4 } from '@zephyr3d/base';
-import { Scene, Application, LambertMaterial, Mesh, OrbitCameraController, PerspectiveCamera, Compositor, Tonemap, SphereShape, DirectionalLight } from '@zephyr3d/scene';
+import {
+  Scene,
+  Application,
+  LambertMaterial,
+  Mesh,
+  OrbitCameraController,
+  PerspectiveCamera,
+  SphereShape,
+  DirectionalLight,
+  getInput
+} from '@zephyr3d/scene';
 import { backendWebGL2 } from '@zephyr3d/backend-webgl';
 
 const myApp = new Application({
@@ -17,22 +27,24 @@ myApp.ready().then(function () {
   const material = new LambertMaterial();
   material.albedoColor = new Vector4(1, 0, 0, 1);
   // Create a sphere mesh
-  const sphere = new Mesh(scene, new SphereShape(), material);
+  new Mesh(scene, new SphereShape(), material);
 
   // Create camera
-  const camera = new PerspectiveCamera(scene, Math.PI/3, myApp.device.canvas.width/myApp.device.canvas.height, 1, 100);
+  const camera = new PerspectiveCamera(
+    scene,
+    Math.PI / 3,
+    myApp.device.canvas.width / myApp.device.canvas.height,
+    1,
+    100
+  );
   camera.lookAt(new Vector3(0, 0, 4), Vector3.zero(), new Vector3(0, 1, 0));
   camera.controller = new OrbitCameraController();
 
-  const compositor = new Compositor();
-  // Add a Tonemap post-processing effect
-  compositor.appendPostEffect(new Tonemap());
-
-  myApp.inputManager.use(camera.handleEvent.bind(camera));
+  getInput().use(camera.handleEvent.bind(camera));
 
   myApp.on('tick', function () {
     camera.updateController();
-    camera.render(scene, compositor);
+    camera.render(scene);
   });
 
   myApp.run();

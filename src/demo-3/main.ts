@@ -1,4 +1,4 @@
-import { Application } from '@zephyr3d/scene';
+import { Application, getDevice } from '@zephyr3d/scene';
 import type { DeviceBackend } from '@zephyr3d/device';
 import { backendWebGPU } from '@zephyr3d/backend-webgpu';
 import { backendWebGL1, backendWebGL2 } from '@zephyr3d/backend-webgl';
@@ -40,19 +40,26 @@ terrainApp.ready().then(async () => {
     ev.preventDefault();
     return false;
   });
-  terrainApp.inputManager.use(demo.camera.handleEvent.bind(demo.camera));
 
   terrainApp.on('pointerup', (ev) => {
     demo.handlePointerUp(ev.button, ev.offsetX, ev.offsetY);
   });
-  Application.instance.device.canvas.addEventListener('contextmenu', function (ev) {
+  getDevice().canvas.addEventListener('contextmenu', function (ev) {
     ev.preventDefault();
     return false;
   });
-  terrainApp.on('resize', (ev) => {
-    demo.camera.aspect = ev.width / ev.height;
+  terrainApp.on('keyup', (ev) => {
+    console.log(ev.code);
+    if (ev.code === 'Backquote') {
+      demo.toggleInspector();
+    } else if (ev.code === 'KeyT') {
+      demo.toggleGUI();
+    }
   });
-  terrainApp.on('tick', (ev) => {
+  terrainApp.on('resize', (width, height) => {
+    demo.camera.aspect = width / height;
+  });
+  terrainApp.on('tick', () => {
     demo.render();
   });
   demo.load();

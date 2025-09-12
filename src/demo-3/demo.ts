@@ -1,24 +1,40 @@
+import type { HttpFS } from '@zephyr3d/base';
 import { PRNG, Quaternion, Vector3, Vector4 } from '@zephyr3d/base';
-import { Texture2D } from '@zephyr3d/device';
-import { Application, AssetHierarchyNode, AssetManager, Bloom, Compositor, DirectionalLight, FXAA, GraphNode, MeshMaterial, ModelInfo, OrbitCameraController, PBRMetallicRoughnessMaterial, PBRSpecularGlossinessMaterial, PerspectiveCamera, Scene, SceneNode, SharedModel, Terrain, Tonemap } from '@zephyr3d/scene';
+import type { Texture2D } from '@zephyr3d/device';
+import type { AssetHierarchyNode, MeshMaterial, ModelInfo, SharedModel } from '@zephyr3d/scene';
+import { BatchGroup, getDevice, getInput, SceneNode } from '@zephyr3d/scene';
+import {
+  AssetManager,
+  DirectionalLight,
+  OrbitCameraController,
+  PBRMetallicRoughnessMaterial,
+  PBRSpecularGlossinessMaterial,
+  PerspectiveCamera,
+  Scene,
+  Terrain
+} from '@zephyr3d/scene';
 import * as zip from '@zip.js/zip.js';
 import { TreeMaterialMetallicRoughness } from './treematerial';
+import { Panel } from './ui';
 
 export class Demo {
-  private _assetManager: AssetManager;
-  private _scene: Scene;
+  private readonly _assetManager: AssetManager;
+  private readonly _scene: Scene;
+  private readonly _root: SceneNode;
   private _terrain: Terrain;
-  private _camera: PerspectiveCamera;
+  private readonly _camera: PerspectiveCamera;
   private _character: ModelInfo;
-  private _compositor: Compositor;
-  private _axisPZ: Vector3;
-  private _actorTarget: Vector3;
-  private _actorDirection: Vector3;
-  private _actorSpeed: number;
+  private readonly _axisPZ: Vector3;
+  private readonly _actorTarget: Vector3;
+  private readonly _actorDirection: Vector3;
+  private readonly _actorSpeed: number;
   private _actorRunning: boolean;
   private _loaded: boolean;
   private _loadPercent: number;
-  constructor(){
+  private _showInspector: boolean;
+  private _ui: Panel;
+  private _lastAnimation: string;
+  constructor() {
     this._terrain = null;
     this._axisPZ = Vector3.axisPZ();
     this._actorTarget = new Vector3();
@@ -27,15 +43,16 @@ export class Demo {
     this._actorRunning = false;
     this._assetManager = new AssetManager();
     this._scene = this.createScene();
+    this._root = new BatchGroup(this._scene) ?? new SceneNode(this._scene);
     this._camera = this.createCamera(this._scene);
-    this._compositor = new Compositor();
-    this._compositor.appendPostEffect(new Tonemap());
-    this._compositor.appendPostEffect(new Bloom());
-    this._compositor.appendPostEffect(new FXAA());
-    Application.instance.device.setFont('24px arial');
+    this._camera.bloom = true;
+    this._camera.FXAA = true;
+    getDevice().setFont('24px arial');
     this.render();
     this._loaded = false;
     this._loadPercent = 0;
+    this._ui = null;
+    this._lastAnimation = null;
   }
   async fetchAssetArchive(url: string, progressCallback: (percent: number) => void): Promise<Blob> {
     progressCallback(0);
@@ -46,7 +63,7 @@ export class Demo {
     const contentLength = response.headers.get('content-length');
     const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
     let receivedBytes = 0;
-    let data: Uint8Array = new Uint8Array(totalBytes || 1024 * 1024);
+    let data: Uint8Array<ArrayBuffer> = new Uint8Array(totalBytes || 1024 * 1024);
     const reader = response.body.getReader();
     if (!reader) {
       throw new Error('Download data is empty');
@@ -65,7 +82,7 @@ export class Demo {
       receivedBytes += value.length;
       progressCallback(Math.floor((receivedBytes / totalBytes) * 100));
       return read();
-    }
+    };
     await read();
     return new Blob([data]);
   }
@@ -95,11 +112,9 @@ export class Demo {
     scene.env.light.radianceMap = scene.env.sky.radianceMap;
     scene.env.light.irradianceMap = scene.env.sky.irradianceMap;
     scene.env.sky.skyType = 'scatter';
-    scene.env.sky.fogType = 'scatter';
-    scene.env.sky.aerialPerspectiveDensity = 10;
     scene.env.sky.cloudy = 0.6;
 
-    const light = new DirectionalLight(scene).setColor(new Vector4(1, 1, 1, 1));
+    const light = new DirectionalLight(scene).setColor(new Vector4(1, 1, 1, 1)).setIntensity(15);
     light.lookAt(new Vector3(1, 1, 1), new Vector3(0, 0, 0), Vector3.axisPY());
     light.intensity = 4;
     light.shadow.shadowMapSize = 2048;
@@ -114,7 +129,7 @@ export class Demo {
     const camera = new PerspectiveCamera(
       scene,
       Math.PI / 3,
-      Application.instance.device.getDrawingBufferWidth() / Application.instance.device.getDrawingBufferHeight(),
+      getDevice().getDrawingBufferWidth() / getDevice().getDrawingBufferHeight(),
       1,
       1500
     );
@@ -123,33 +138,52 @@ export class Demo {
   async load() {
     this._loaded = false;
     this._loadPercent = 0;
-    const zipContent = await this.fetchAssetArchive('./assets/terrain_assets.zip', percent => {
+    const zipContent = await this.fetchAssetArchive('./assets/terrain_assets.zip', (percent) => {
       this._loadPercent = percent;
     });
-    Application.instance.device.runNextFrame(async () => {
+    getDevice().runNextFrame(async () => {
       const fileMap = await this.readZip(zipContent);
-      this._assetManager.httpRequest.urlResolver = url => fileMap.get(url) || url;
+      (this._assetManager.vfs as HttpFS).urlResolver = (url) => fileMap.get(url) || url;
 
       // load world
       this._terrain = await this.loadTerrain(this._scene, this._assetManager);
+      this._terrain.parent = this._root;
       this._character = await this.loadCharacter(this._scene, this._assetManager);
       // initialize
       this._camera.parent = this._terrain;
       this._character.group.parent = this._terrain;
+      this._character.group.showState = 'visible';
       const x = this._terrain.scaledWidth * 0.37;
       const z = this._terrain.scaledHeight * 0.19;
       const y = this._terrain.getElevation(x, z);
       this._character.group.position.setXYZ(x, y, z);
-      this._character.animationSet.playAnimation('idle01_yindao', 0);
+      this.idle();
+      //this._character.animationSet.playAnimation('idle01_yindao', 0);
       const eyePos = new Vector3(x + 1, y + 5, z - 21);
       const destPos = new Vector3(x, y, z);
       this._camera.lookAt(eyePos, destPos, Vector3.axisPY());
       this._camera.controller = new OrbitCameraController({ center: destPos });
       // loaded
-      this._terrain.showState = GraphNode.SHOW_DEFAULT;
+      this._terrain.showState = 'visible';
       this._scene.env.sky.wind.setXY(700, 350);
+      getInput().use(this._camera.handleEvent.bind(this._camera));
       this._loaded = true;
     });
+  }
+  playAnimation(name: string) {
+    if (this._lastAnimation !== name) {
+      if (this._lastAnimation) {
+        this._character.animationSet.stopAnimation(this._lastAnimation, { fadeOut: 0.3 });
+      }
+      this._character.animationSet.playAnimation(name, { fadeIn: 0.3 });
+      this._lastAnimation = name;
+    }
+  }
+  idle() {
+    this.playAnimation('idle01_yindao');
+  }
+  run() {
+    this.playAnimation('run_front');
   }
   async loadCharacter(scene: Scene, assetManager: AssetManager) {
     const character = await assetManager.fetchModel(scene, '/assets/models/alice_shellfire/scene.gltf');
@@ -190,7 +224,8 @@ export class Demo {
       linearColorSpace: true
     });
     const terrain = new Terrain(scene);
-    terrain.showState = GraphNode.SHOW_HIDE;
+    terrain.scale.setXYZ(0.5, 1, 0.5);
+    terrain.showState = 'hidden';
     terrain.create(mapWidth, mapHeight, heightsF32, new Vector3(1, 100, 1), 33, {
       splatMap,
       detailMaps: {
@@ -231,25 +266,31 @@ export class Demo {
     });
     terrain.maxPixelError = 6;
     terrain.castShadow = true;
-    terrain.pickMode = GraphNode.PICK_ENABLED;
+    terrain.pickable = true;
 
     // Distribute some trees
+    const numTrees = 500;
     const PY = Vector3.axisPY();
-    const trees = [{
-      url: '/assets/models/stylized_tree.glb',
-      scale: 1.5
-    }];
+    const trees = [
+      {
+        url: '/assets/models/stylized_tree.glb',
+        scale: 1.5
+      }
+    ];
     const f = 1 / trees.length;
     const seed = 0;
     const prng = new PRNG(seed);
-    for (let i = 0; i < 500; i++) {
+    for (let i = 0; i < numTrees; i++) {
       const x = prng.get() * terrain.scaledWidth;
       const z = prng.get() * terrain.scaledHeight;
       const y = terrain.getElevation(x, z);
       const index = Math.min(Math.floor(prng.get() / f), trees.length - 1);
-      const tree = await assetManager.fetchModel(scene, trees[index].url, null, this.replaceMaterials);
+      const tree = await assetManager.fetchModel(scene, trees[index].url, {
+        postProcess: this.replaceMaterials,
+        enableInstancing: true
+      });
       tree.group.parent = terrain;
-      tree.group.pickMode = SceneNode.PICK_DISABLED;
+      tree.group.pickable = false;
       tree.group.position.setXYZ(x, y, z);
       tree.group.scale.setXYZ(trees[index].scale, trees[index].scale, trees[index].scale);
       tree.group.rotation = Quaternion.fromAxisAngle(PY, prng.get() * 2 * Math.PI);
@@ -261,7 +302,7 @@ export class Demo {
     function recusivelyReplaceMaterial(node: AssetHierarchyNode) {
       if (node.mesh) {
         for (const subMesh of node.mesh.subMeshes) {
-          const material = subMesh.material as MeshMaterial;
+          const material = subMesh.material.get() as MeshMaterial;
           const needChange = material.blendMode === 'blend' || material.alphaCutoff > 0;
           if (material instanceof PBRMetallicRoughnessMaterial && material.albedoTexture && needChange) {
             const newMaterial = new TreeMaterialMetallicRoughness();
@@ -269,7 +310,7 @@ export class Demo {
             newMaterial.textureHeight = material.albedoTexture.height;
             newMaterial.blendMode = 'none';
             newMaterial.alphaCutoff = 0.8;
-            newMaterial.stateSet.useRasterizerState().setCullMode('none');
+            newMaterial.cullMode = 'none';
             newMaterial.ior = material.ior;
             newMaterial.specularFactor = material.specularFactor;
             newMaterial.albedoColor = material.albedoColor;
@@ -300,16 +341,19 @@ export class Demo {
             newMaterial.specularColorTextureSampler = material.specularColorTextureSampler;
             newMaterial.metallic = 0;
             newMaterial.roughness = 1;
-            subMesh.material = newMaterial;
-          } else if (material instanceof PBRSpecularGlossinessMaterial && material.albedoTexture && needChange) {
+            subMesh.material.set(newMaterial);
+          } else if (
+            material instanceof PBRSpecularGlossinessMaterial &&
+            material.albedoTexture &&
+            needChange
+          ) {
             const newMaterial = new TreeMaterialMetallicRoughness();
             newMaterial.textureWidth = material.albedoTexture.width;
             newMaterial.textureHeight = material.albedoTexture.height;
             newMaterial.blendMode = 'none';
             newMaterial.alphaCutoff = 0.8;
-            newMaterial.stateSet.useRasterizerState().setCullMode('none');
+            newMaterial.cullMode = 'none';
             newMaterial.ior = material.ior;
-            newMaterial.specularFactor = material.specularFactor;
             newMaterial.albedoColor = material.albedoColor;
             newMaterial.albedoTexCoordIndex = material.albedoTexCoordIndex;
             newMaterial.albedoTexCoordMatrix = material.albedoTexCoordMatrix;
@@ -330,7 +374,7 @@ export class Demo {
             newMaterial.specularTextureSampler = material.specularTextureSampler;
             newMaterial.metallic = 0;
             newMaterial.roughness = 1;
-            subMesh.material = newMaterial;
+            subMesh.material.set(newMaterial);
           }
         }
       }
@@ -338,7 +382,7 @@ export class Demo {
         recusivelyReplaceMaterial(child);
       }
     }
-    for(const node of model.nodes) {
+    for (const node of model.nodes) {
       recusivelyReplaceMaterial(node);
     }
     return model;
@@ -347,15 +391,22 @@ export class Demo {
     if (!this._loaded) {
       return;
     }
-    const obj = this._scene.raycast(this._camera, x, y);
-    if (obj && obj.node.isTerrain()) {
+    const ray = this._camera.constructRay(x, y);
+    const obj = this._scene.raycast(ray, this._camera.getFarPlane());
+    if (obj && obj.target.node.isTerrain()) {
       this._terrain.invWorldMatrix.transformPointAffine(obj.point, this._actorTarget);
       if (button === 2) {
         this._actorDirection.set(
-          Vector3.mul(Vector3.sub(this._actorTarget, this._character.group.position), new Vector3(1, 0, 1)).inplaceNormalize()
+          Vector3.mul(
+            Vector3.sub(this._actorTarget, this._character.group.position),
+            new Vector3(1, 0, 1)
+          ).inplaceNormalize()
         );
-        this._character.group.rotation = Quaternion.unitVectorToUnitVector(this._axisPZ, this._actorDirection);
-        this._character.animationSet.playAnimation('run_front', 0);
+        this._character.group.rotation = Quaternion.unitVectorToUnitVector(
+          this._axisPZ,
+          this._actorDirection
+        );
+        this.run();
         this._actorRunning = true;
       }
     }
@@ -366,13 +417,16 @@ export class Demo {
         Vector3.mul(this._character.group.position, new Vector3(1, 0, 1)),
         Vector3.mul(this._actorTarget, new Vector3(1, 0, 1))
       );
-      let movement = (Application.instance.device.frameInfo.elapsedFrame * this._actorSpeed) / 1000;
+      let movement = (getDevice().frameInfo.elapsedFrame * this._actorSpeed) / 1000;
       if (movement >= distance) {
         this._actorRunning = false;
         movement = distance;
-        this._character.animationSet.playAnimation('idle01_yindao', 0);
+        this.idle();
       }
-      const newPos = Vector3.add(this._character.group.position, Vector3.scale(this._actorDirection, movement));
+      const newPos = Vector3.add(
+        this._character.group.position,
+        Vector3.scale(this._actorDirection, movement)
+      );
       newPos.y = this._terrain.getElevation(newPos.x, newPos.z);
       this._character.group.position.set(newPos);
       (this._camera.controller as OrbitCameraController).center = newPos;
@@ -390,9 +444,21 @@ export class Demo {
       this.updateCharacter();
       this.updateCamera();
     }
-    this._camera.render(this._scene, this._compositor);
+    this._camera.render(this._scene);
     if (!this._loaded) {
-      Application.instance.device.drawText(`Loading: %${this._loadPercent}`, 20, 20, '#a00000');
+      getDevice().drawText(`Loading: %${this._loadPercent}`, 20, 20, '#a00000');
+    } else {
+      if (!this._ui) {
+        this._ui = new Panel();
+      }
+    }
+  }
+  toggleInspector() {
+    this._showInspector = !this._showInspector;
+  }
+  toggleGUI() {
+    if (this._ui) {
+      this._ui.toggle();
     }
   }
 }
