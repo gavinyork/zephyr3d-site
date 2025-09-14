@@ -61,14 +61,20 @@ app.ready().then(async () => {
   const batchGroup = new BatchGroup(scene);
 
   const assetManager = new AssetManager();
-  const room = await assetManager.fetchModel(scene, 'assets/models/abandoned_building_room.glb');
+  const room = await assetManager.fetchModel(
+    scene,
+    'https://cdn.zephyr3d.org/doc/assets/models/abandoned_building_room.glb'
+  );
   room.group.parent = batchGroup;
 
   const lightOrigin = new SceneNode(scene);
   lightOrigin.parent = room.group;
   lightOrigin.position.y = 151;
 
-  const lightCage = await assetManager.fetchModel(scene, 'assets/models/cage/scene.gltf');
+  const lightCage = await assetManager.fetchModel(
+    scene,
+    'https://cdn.zephyr3d.org/doc/assets/models/cage/scene.gltf'
+  );
   lightCage.group.scale.setXYZ(15, 15, 15);
   lightCage.group.position.y = -40;
   lightCage.group.parent = lightOrigin;

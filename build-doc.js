@@ -1,7 +1,6 @@
 const crossSpawn = require('cross-spawn');
 const fs = require('fs');
 const path = require('path');
-const yargs = require('yargs/yargs');
 
 const apiExtacter = path.join(__dirname, 'node_modules', '.bin', 'api-extractor');
 const apiDocumenter = path.join(__dirname, 'node_modules', '.bin', 'api-documenter');
@@ -25,31 +24,31 @@ function document() {
 function extract(projectName, projectPath) {
   process.chdir(projectPath);
   const config = {
-    "$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-    "projectFolder": '.',
-    "mainEntryPointFilePath": "<projectFolder>/dist/index.d.ts",
-    "bundledPackages": [],
-    "compiler": {
-      "tsconfigFilePath": "<projectFolder>/tsconfig.json"
+    $schema: 'https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json',
+    projectFolder: '.',
+    mainEntryPointFilePath: '<projectFolder>/dist/index.d.ts',
+    bundledPackages: [],
+    compiler: {
+      tsconfigFilePath: '<projectFolder>/tsconfig.json'
     },
-    "apiReport": {
-      "enabled": true,
-      "reportFileName": `${projectName}.api.md`,
-      "reportFolder": "<projectFolder>/../../site/report",
-      "reportTempFolder": "<projectFolder>/../../site/report"
+    apiReport: {
+      enabled: true,
+      reportFileName: `${projectName}.api.md`,
+      reportFolder: '<projectFolder>/../../apps/doc/report',
+      reportTempFolder: '<projectFolder>/../../apps/doc/report'
     },
-    "docModel": {
-      "enabled": true,
-      "projectFolderUrl": "http://localhost:3000/#/doc/markdown",
-      "apiJsonFilePath": `<projectFolder>/../../site/dist/web/doc/input/${projectName}.api.json`,
+    docModel: {
+      enabled: true,
+      projectFolderUrl: 'http://localhost:3000/#/doc/markdown',
+      apiJsonFilePath: `<projectFolder>/../../apps/doc/dist/web/doc/input/${projectName}.api.json`
     },
-    "dtsRollup": {
-      "enabled": false
+    dtsRollup: {
+      enabled: false
     },
-    "tsdocMetadata": {
-      "enabled": false
+    tsdocMetadata: {
+      enabled: false
     }
-  }
+  };
   fs.writeFileSync('api-extractor.json', JSON.stringify(config, null, 2));
   spawnSync(apiExtacter, ['run', '--local', '--verbose']);
   fs.rmSync('api-extractor.json');
@@ -58,7 +57,7 @@ function extract(projectName, projectPath) {
 const projects = ['base', 'device', 'imgui', 'scene', 'backend-webgl', 'backend-webgpu'];
 const cwd = process.cwd();
 for (const name of projects) {
-  const projectPath = path.resolve(__dirname, '..', 'libs', name);
+  const projectPath = path.resolve(__dirname, '..', '..', 'libs', name);
   if (fs.existsSync(projectPath)) {
     extract(name, projectPath);
   } else {
@@ -85,4 +84,3 @@ fs.readdirSync(markdownDir).forEach((file) => {
 });
 
 process.chdir(cwd);
-

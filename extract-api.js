@@ -1,16 +1,14 @@
-const path = require('path');
-
 const config = {
-  $schema: "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-  projectFolder: "./",
+  $schema: 'https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json',
+  projectFolder: './',
   compiler: {
-    tsconfigFilePath: "<projectFolder>/tsconfig.json"
+    tsconfigFilePath: '<projectFolder>/tsconfig.json'
   },
   mainEntryPointFilePath: `<projectFolder>/dist/index.d.ts`,
   apiReport: {
     enabled: true,
-    reportFolder: "../../docs/api",
-    reportTempFolder: "../../docs/temp/api"
+    reportFolder: '../../docs/api',
+    reportTempFolder: '../../docs/temp/api'
   },
   docModel: {
     enabled: false
@@ -24,36 +22,36 @@ const config = {
   messages: {
     tsdocMessageReporting: {
       default: {
-        logLevel: "none"
+        logLevel: 'none'
       }
     },
     extractorMessageReporting: {
       default: {
-        logLevel: "error",
+        logLevel: 'error',
         addToApiReportFile: false
       },
-      "ae-incompatible-release-tags": {
-        logLevel: "error",
+      'ae-incompatible-release-tags': {
+        logLevel: 'error',
         addToApiReportFile: false
       },
-      "ae-missing-release-tag": {
-        logLevel: ignoreMissingTags ? "none" : "error",
+      'ae-missing-release-tag': {
+        logLevel: ignoreMissingTags ? 'none' : 'error',
         addToApiReportFile: false
       },
-      "ae-internal-missing-underscore": {
-        logLevel: "none",
+      'ae-internal-missing-underscore': {
+        logLevel: 'none',
         addToApiReportFile: false
       },
-      "ae-forgotten-export": {
-        logLevel: "none",
+      'ae-forgotten-export': {
+        logLevel: 'none',
         addToApiReportFile: false
       },
-      "ae-unresolved-inheritdoc-reference": {
-        logLevel: "error",
+      'ae-unresolved-inheritdoc-reference': {
+        logLevel: 'error',
         addToApiReportFile: true
       },
-      "ae-unresolved-inheritdoc-base": {
-        logLevel: "error",
+      'ae-unresolved-inheritdoc-base': {
+        logLevel: 'error',
         addToApiReportFile: true
       }
     }

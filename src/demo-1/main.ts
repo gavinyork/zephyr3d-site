@@ -99,12 +99,16 @@ myApp.ready().then(async function () {
   const assetManager = new AssetManager();
 
   // Fur material
-  const furColorTex = await assetManager.fetchTexture<Texture2D>('assets/images/fur-color.png');
+  const furColorTex = await assetManager.fetchTexture<Texture2D>(
+    'https://cdn.zephyr3d.org/doc/assets/images/fur-color.png'
+  );
   furColorTex.samplerOptions = {
     addressU: 'repeat',
     addressV: 'repeat'
   };
-  const furAlphaTex = await assetManager.fetchTexture<Texture2D>('assets/images/fur-alpha.png');
+  const furAlphaTex = await assetManager.fetchTexture<Texture2D>(
+    'https://cdn.zephyr3d.org/doc/assets/images/fur-alpha.png'
+  );
   furAlphaTex.samplerOptions = {
     addressU: 'repeat',
     addressV: 'repeat'
@@ -115,7 +119,7 @@ myApp.ready().then(async function () {
   furMaterial.thickness = 0.05;
   furMaterial.numLayers = 30;
   furMaterial.noiseRepeat = 16;
-  //const furMesh = await fetchModel(scene, 'assets/models/stanford-bunny.zip');
+  //const furMesh = await fetchModel(scene, 'https://cdn.zephyr3d.org/doc/assets/models/stanford-bunny.zip');
   const furMesh = new Mesh(scene, new TorusShape(), furMaterial);
   /*
   furMesh.group.iterate(node => {
@@ -129,8 +133,12 @@ myApp.ready().then(async function () {
   meshes.push({ node: furMesh, material: furMaterial, name: 'Fur' });
 
   // Parallax mapping material
-  const rocksTex = await assetManager.fetchTexture<Texture2D>('assets/images/rocks.jpg');
-  const rocksNHTex = await assetManager.fetchTexture<Texture2D>('assets/images/rocks_NM_height.tga');
+  const rocksTex = await assetManager.fetchTexture<Texture2D>(
+    'https://cdn.zephyr3d.org/doc/assets/images/rocks.jpg'
+  );
+  const rocksNHTex = await assetManager.fetchTexture<Texture2D>(
+    'https://cdn.zephyr3d.org/doc/assets/images/rocks_NM_height.tga'
+  );
   const parallaxMaterial = new ParallaxMapMaterial();
   parallaxMaterial.shininess = 8;
   parallaxMaterial.mode = 'occlusion';
@@ -150,7 +158,7 @@ myApp.ready().then(async function () {
   const toonMaterial = new ToonMaterial();
   toonMaterial.bands = 2;
   toonMaterial.edgeThickness = 1;
-  const toonMesh = await fetchModel(scene, 'assets/models/Duck.glb');
+  const toonMesh = await fetchModel(scene, 'https://cdn.zephyr3d.org/doc/assets/models/Duck.glb');
   toonMesh.group.iterate((node) => {
     if (node.isMesh()) {
       toonMaterial.albedoTexture = (node.material as PBRMetallicRoughnessMaterial).albedoTexture;

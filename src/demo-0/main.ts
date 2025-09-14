@@ -38,7 +38,7 @@ gltfApp.ready().then(async () => {
   const scene = new Scene();
   const gltfViewer = new GLTFViewer(scene);
   await gltfViewer.ready();
-  gltfViewer.loadModel('./assets/models/DamagedHelmet.glb');
+  gltfViewer.loadModel('https://cdn.zephyr3d.org/doc/assets/models/DamagedHelmet.glb');
   gltfApp.on('drop', (ev) => {
     ev.preventDefault();
     ev.stopPropagation();

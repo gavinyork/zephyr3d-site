@@ -138,9 +138,12 @@ export class Demo {
   async load() {
     this._loaded = false;
     this._loadPercent = 0;
-    const zipContent = await this.fetchAssetArchive('./assets/terrain_assets.zip', (percent) => {
-      this._loadPercent = percent;
-    });
+    const zipContent = await this.fetchAssetArchive(
+      'https://cdn.zephyr3d.org/doc/assets/terrain_assets.zip',
+      (percent) => {
+        this._loadPercent = percent;
+      }
+    );
     getDevice().runNextFrame(async () => {
       const fileMap = await this.readZip(zipContent);
       (this._assetManager.vfs as HttpFS).urlResolver = (url) => fileMap.get(url) || url;
@@ -186,43 +189,75 @@ export class Demo {
     this.playAnimation('run_front');
   }
   async loadCharacter(scene: Scene, assetManager: AssetManager) {
-    const character = await assetManager.fetchModel(scene, '/assets/models/alice_shellfire/scene.gltf');
+    const character = await assetManager.fetchModel(
+      scene,
+      'https://cdn.zephyr3d.org/doc/assets/models/alice_shellfire/scene.gltf'
+    );
     character.group.scale.setXYZ(2, 2, 2);
     return character;
   }
   async loadTerrain(scene: Scene, assetManager: AssetManager) {
     const mapWidth = 1025;
     const mapHeight = 1025;
-    const heightMap = await assetManager.fetchBinaryData('/assets/maps/map3/heightmap.raw');
+    const heightMap = await assetManager.fetchBinaryData(
+      'https://cdn.zephyr3d.org/doc/assets/maps/map3/heightmap.raw'
+    );
     const heightsInt16 = new Uint16Array(heightMap);
     const heightsF32 = new Float32Array(mapWidth * mapHeight);
     for (let i = 0; i < mapWidth * mapHeight; i++) {
       heightsF32[i] = heightsInt16[i] / 65535;
     }
-    const grassMap1 = await assetManager.fetchTexture<Texture2D>('/assets/maps/map3/857caeb1.dds');
-    const grassMap2 = await assetManager.fetchTexture<Texture2D>('/assets/maps/map3/grass1x.dds');
-    const grassMap3 = await assetManager.fetchTexture<Texture2D>('/assets/maps/map3/gj02.dds');
-    const splatMap = await assetManager.fetchTexture<Texture2D>('/assets/maps/map3/splatmap.tga', {
-      linearColorSpace: true
-    });
-    const detailAlbedo0 = await assetManager.fetchTexture<Texture2D>('/assets/maps/map3/grass_color.png', {
-      linearColorSpace: false
-    });
-    const detailNormal0 = await assetManager.fetchTexture<Texture2D>('/assets/maps/map3/grass_norm.png', {
-      linearColorSpace: true
-    });
-    const detailAlbedo1 = await assetManager.fetchTexture<Texture2D>('/assets/maps/map3/28.png', {
-      linearColorSpace: false
-    });
-    const detailNormal1 = await assetManager.fetchTexture<Texture2D>('/assets/maps/map3/29.png', {
-      linearColorSpace: true
-    });
-    const detailAlbedo2 = await assetManager.fetchTexture<Texture2D>('/assets/maps/map3/174.jpg', {
-      linearColorSpace: false
-    });
-    const detailNormal2 = await assetManager.fetchTexture<Texture2D>('/assets/maps/map3/174_norm.jpg', {
-      linearColorSpace: true
-    });
+    const grassMap1 = await assetManager.fetchTexture<Texture2D>(
+      'https://cdn.zephyr3d.org/doc/assets/maps/map3/857caeb1.dds'
+    );
+    const grassMap2 = await assetManager.fetchTexture<Texture2D>(
+      'https://cdn.zephyr3d.org/doc/assets/maps/map3/grass1x.dds'
+    );
+    const grassMap3 = await assetManager.fetchTexture<Texture2D>(
+      'https://cdn.zephyr3d.org/doc/assets/maps/map3/gj02.dds'
+    );
+    const splatMap = await assetManager.fetchTexture<Texture2D>(
+      'https://cdn.zephyr3d.org/doc/assets/maps/map3/splatmap.tga',
+      {
+        linearColorSpace: true
+      }
+    );
+    const detailAlbedo0 = await assetManager.fetchTexture<Texture2D>(
+      'https://cdn.zephyr3d.org/doc/assets/maps/map3/grass_color.png',
+      {
+        linearColorSpace: false
+      }
+    );
+    const detailNormal0 = await assetManager.fetchTexture<Texture2D>(
+      'https://cdn.zephyr3d.org/doc/assets/maps/map3/grass_norm.png',
+      {
+        linearColorSpace: true
+      }
+    );
+    const detailAlbedo1 = await assetManager.fetchTexture<Texture2D>(
+      'https://cdn.zephyr3d.org/doc/assets/maps/map3/28.png',
+      {
+        linearColorSpace: false
+      }
+    );
+    const detailNormal1 = await assetManager.fetchTexture<Texture2D>(
+      'https://cdn.zephyr3d.org/doc/assets/maps/map3/29.png',
+      {
+        linearColorSpace: true
+      }
+    );
+    const detailAlbedo2 = await assetManager.fetchTexture<Texture2D>(
+      'https://cdn.zephyr3d.org/doc/assets/maps/map3/174.jpg',
+      {
+        linearColorSpace: false
+      }
+    );
+    const detailNormal2 = await assetManager.fetchTexture<Texture2D>(
+      'https://cdn.zephyr3d.org/doc/assets/maps/map3/174_norm.jpg',
+      {
+        linearColorSpace: true
+      }
+    );
     const terrain = new Terrain(scene);
     terrain.scale.setXYZ(0.5, 1, 0.5);
     terrain.showState = 'hidden';
@@ -273,7 +308,7 @@ export class Demo {
     const PY = Vector3.axisPY();
     const trees = [
       {
-        url: '/assets/models/stylized_tree.glb',
+        url: 'https://cdn.zephyr3d.org/doc/assets/models/stylized_tree.glb',
         scale: 1.5
       }
     ];

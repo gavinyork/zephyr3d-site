@@ -144,7 +144,9 @@ myApp.ready().then(async () => {
   material.color.setXYZW(1, 1, 0, 1);
   // shininess是mixinBlinnPhong引入的属性
   material.shininess = 64;
-  material.diffuseTexture = await assetManager.loadTexture('./assets/images/layer.jpg');
+  material.diffuseTexture = await assetManager.loadTexture(
+    'https://cdn.zephyr3d.org/doc/assets/images/layer.jpg'
+  );
   material.uniformChanged();
 
   new Mesh(scene, new TorusShape(), material);

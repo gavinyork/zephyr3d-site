@@ -62,11 +62,11 @@ material.metallic = 0.9;
 // roughness 0.6
 material.roughness = 0.6;
 // Adds the diffuse texture
-assetManager.fetchTexture('assets/images/earthcolor.jpg').then(texture => {
+assetManager.fetchTexture('https://cdn.zephyr3d.org/doc/assets/images/earthcolor.jpg').then(texture => {
   material.albedoTexture = texture;
 });
 // Adds the normal map
-assetManager.fetchTexture('assets/images/earthnormal.png', {
+assetManager.fetchTexture('https://cdn.zephyr3d.org/doc/assets/images/earthnormal.png', {
   linearColorSpace: true
 }).then(texture => {
   material.normalTexture = texture;

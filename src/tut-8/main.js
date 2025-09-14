@@ -29,11 +29,11 @@ myApp.ready().then(function () {
   material.shininess = 256;
   // Load albedo map and normal map
   const assetManager = new AssetManager();
-  assetManager.fetchTexture('assets/images/earthcolor.jpg').then((texture) => {
+  assetManager.fetchTexture('https://cdn.zephyr3d.org/doc/assets/images/earthcolor.jpg').then((texture) => {
     material.albedoTexture = /** @type {import('@zephyr3d/device').Texture2D} */ (texture);
   });
   assetManager
-    .fetchTexture('assets/images/earthnormal.png', {
+    .fetchTexture('https://cdn.zephyr3d.org/doc/assets/images/earthnormal.png', {
       linearColorSpace: true
     })
     .then((texture) => {

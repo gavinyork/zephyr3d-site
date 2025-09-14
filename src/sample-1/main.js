@@ -75,7 +75,8 @@ import { backendWebGL2 } from '@zephyr3d/backend-webgl';
 
   // load texture
   const img = document.createElement('img');
-  img.src = 'assets/images/layer.jpg';
+  img.src = 'https://cdn.zephyr3d.org/doc/assets/images/layer.jpg';
+  img.crossOrigin = 'anonymous';
   await img.decode();
   const bitmap = await createImageBitmap(img, { premultiplyAlpha: 'none' });
   const texture = device.createTexture2DFromImage(bitmap, true);

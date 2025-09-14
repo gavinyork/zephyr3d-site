@@ -22,7 +22,7 @@ myApp.ready().then(function () {
 
   const assetManager = new AssetManager();
   // Load panorama
-  assetManager.fetchTexture('assets/images/Wide_Street.hdr').then((tex) => {
+  assetManager.fetchTexture('https://cdn.zephyr3d.org/doc/assets/images/Wide_Street.hdr').then((tex) => {
     // Generate a cube sky map from the panorama
     const skyMap = myApp.device.createCubeTexture('rgba16f', 512);
     panoramaToCubemap(/** @type {import('@zephyr3d/device').Texture2D} */ (tex), skyMap);

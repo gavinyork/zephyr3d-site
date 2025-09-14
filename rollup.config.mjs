@@ -72,7 +72,7 @@ function traverseDirectory(dirPath, rootPath, dict) {
 
 let buildCache = {};
 try {
-  if (fs.statSync(cacheFile).isFile()) {
+  if (fs.existsSync(destdir) && fs.statSync(cacheFile).isFile()) {
     const content = fs.readFileSync(cacheFile, 'utf8');
     buildCache = JSON.parse(content);
   }

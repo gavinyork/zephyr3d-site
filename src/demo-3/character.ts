@@ -1,3 +1,4 @@
+import { ZipFS } from '@zephyr3d/base';
 import { AnimationSet, AssetManager, Scene, SceneNode } from '@zephyr3d/scene';
 import * as zip from '@zip.js/zip.js';
 
@@ -14,41 +15,32 @@ export class Character {
     return this._node;
   }
   idle() {
-    this._animations.playAnimation('idle01_yindao', 0);
+    this._animations.playAnimation('idle01_yindao');
   }
   runFront() {
-    this._animations.playAnimation('run_front', 0);
+    this._animations.playAnimation('run_front');
   }
   runBack() {
-    this._animations.playAnimation('run_back', 0);
+    this._animations.playAnimation('run_back');
   }
   runLeft() {
-    this._animations.playAnimation('run_left', 0);
+    this._animations.playAnimation('run_left');
   }
   runRight() {
-    this._animations.playAnimation('run_right', 0);
-  }
-  private async readZip(url: string): Promise<Map<string, string>> {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    const reader = new zip.ZipReader(new zip.BlobReader(blob));
-    const entries = await reader.getEntries();
-    const fileMap = new Map();
-    for (const entry of entries) {
-      if (!entry.directory) {
-        const blob = await entry.getData(new zip.BlobWriter());
-        const fileURL = URL.createObjectURL(blob);
-        fileMap.set(`/${entry.filename}`, fileURL);
-      }
-    }
-    await reader.close();
-    return fileMap;
+    this._animations.playAnimation('run_right');
   }
   async load(): Promise<SceneNode> {
-    const fileMap = await this.readZip('./assets/models/alice_shellfire.zip');
-    const assetManager = new AssetManager();
-    assetManager.httpRequest.urlResolver = url => fileMap.get(url) || url;
-    const modelFile = Array.from(fileMap.keys()).find((val) => /(\.gltf|\.glb)$/i.test(val));
+    const zipFS = new ZipFS(zip);
+    const content = await (
+      await fetch('https://cdn.zephyr3d.org/doc/assets/models/alice_shellfire.zip')
+    ).arrayBuffer();
+    await zipFS.initializeFromData(content);
+    const assetManager = new AssetManager(zipFS);
+    const modelFiles = await zipFS.glob('**/*.{gltf,glb}');
+    if (modelFiles.length === 0) {
+      throw new Error('No glTF model found in zip');
+    }
+    const modelFile = modelFiles[0].path;
     const modelInfo = await assetManager.fetchModel(this._scene, modelFile);
     this._node = modelInfo.group;
     this._node.scale.setXYZ(2, 2, 2);

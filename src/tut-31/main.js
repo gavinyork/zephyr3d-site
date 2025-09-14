@@ -65,9 +65,9 @@ myApp.ready().then(async () => {
     });
     // Grass blade textures
     /** @type {import('@zephyr3d/device').Texture2D} */
-    const grass1 = await assetManager.fetchTexture('assets/images/grass1.dds');
+    const grass1 = await assetManager.fetchTexture('https://cdn.zephyr3d.org/doc/assets/images/grass1.dds');
     /** @type {import('@zephyr3d/device').Texture2D} */
-    const grass2 = await assetManager.fetchTexture('assets/images/grass2.dds');
+    const grass2 = await assetManager.fetchTexture('https://cdn.zephyr3d.org/doc/assets/images/grass2.dds');
     // Create and initialize the terrain
     const terrain = new Terrain(scene);
     terrain.create(mapWidth, mapHeight, heightsF32, new Vector3(1, 62, 1), 33, {

@@ -15,7 +15,7 @@ Tools like CMFT are commonly used to generate the Radiance and Irradiance maps, 
 ```javascript
 
   // Load the panorama
-  assetManager.fetchTexture('assets/images/Wide_Street.hdr').then(tex => {
+  assetManager.fetchTexture('https://cdn.zephyr3d.org/doc/assets/images/Wide_Street.hdr').then(tex => {
     // Generate a cube sky map from the panorama
     const skyMap = myApp.device.createCubeTexture('rgba16f', 512);
     panoramaToCubemap(tex, skyMap);

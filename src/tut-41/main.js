@@ -151,7 +151,9 @@ myApp.ready().then(async () => {
   const assetManager = new AssetManager();
   const material = new MyLambertMaterial();
   material.color.setXYZW(1, 1, 0, 1);
-  material.diffuseTexture = await assetManager.loadTexture('./assets/images/layer.jpg');
+  material.diffuseTexture = await assetManager.loadTexture(
+    'https://cdn.zephyr3d.org/doc/assets/images/layer.jpg'
+  );
   material.uniformChanged();
 
   new Mesh(scene, new TorusShape(), material);

@@ -64,11 +64,11 @@ material.metallic = 0.9;
 // 粗糙度 0.6
 material.roughness = 0.6;
 // 添加diffuse贴图
-assetManager.fetchTexture('assets/images/earthcolor.jpg').then(texture => {
+assetManager.fetchTexture('https://cdn.zephyr3d.org/doc/assets/images/earthcolor.jpg').then(texture => {
   material.albedoTexture = texture;
 });
 // 添加法线贴图
-assetManager.fetchTexture('assets/images/earthnormal.png', {
+assetManager.fetchTexture('https://cdn.zephyr3d.org/doc/assets/images/earthnormal.png', {
   linearColorSpace: true
 }).then(texture => {
   material.normalTexture = texture;

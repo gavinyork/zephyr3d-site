@@ -20,16 +20,16 @@ export class EnvMaps {
   constructor() {
     this._envMaps = {
       tower: {
-        path: 'assets/images/environments/tower.hdr'
+        path: 'https://cdn.zephyr3d.org/doc/assets/images/environments/tower.hdr'
       },
       doge2: {
-        path: 'assets/images/environments/doge2.hdr'
+        path: 'https://cdn.zephyr3d.org/doc/assets/images/environments/doge2.hdr'
       },
       'Street night': {
-        path: 'assets/images/environments/street_night.hdr'
+        path: 'https://cdn.zephyr3d.org/doc/assets/images/environments/street_night.hdr'
       },
       forest: {
-        path: 'assets/images/environments/forest.hdr'
+        path: 'https://cdn.zephyr3d.org/doc/assets/images/environments/forest.hdr'
       }
     };
     this._assetManager = new AssetManager();

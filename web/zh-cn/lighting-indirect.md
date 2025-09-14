@@ -18,7 +18,7 @@ IBL是通过对环境贴图在球面空间进行积分而预先计算出场景�
 ```javascript
 
   // 加载全景图
-  assetManager.fetchTexture('assets/images/Wide_Street.hdr').then(tex => {
+  assetManager.fetchTexture('https://cdn.zephyr3d.org/doc/assets/images/Wide_Street.hdr').then(tex => {
     // 通过全景图生成立方体天空贴图
     const skyMap = myApp.device.createCubeTexture('rgba16f', 512);
     panoramaToCubemap(tex, skyMap);

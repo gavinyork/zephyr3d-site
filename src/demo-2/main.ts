@@ -1,6 +1,6 @@
 import * as zip from '@zip.js/zip.js';
-import type { AABB, HttpFS } from '@zephyr3d/base';
-import { Vector3, Vector4 } from '@zephyr3d/base';
+import type { AABB } from '@zephyr3d/base';
+import { Vector3, Vector4, ZipFS } from '@zephyr3d/base';
 import type { SceneNode } from '@zephyr3d/scene';
 import {
   Scene,
@@ -77,21 +77,6 @@ async function fetchAssetArchive(url: string, progressCallback: (percent: number
   return new Blob([data]);
 }
 
-async function readZip(blob: Blob): Promise<Map<string, string>> {
-  const reader = new zip.ZipReader(new zip.BlobReader(blob));
-  const entries = await reader.getEntries();
-  const fileMap = new Map();
-  for (const entry of entries) {
-    if (!entry.directory) {
-      const blob = await entry.getData(new zip.BlobWriter());
-      const fileURL = URL.createObjectURL(blob);
-      fileMap.set(`/${entry.filename}`, fileURL);
-    }
-  }
-  await reader.close();
-  return fileMap;
-}
-
 const lightApp = new Application({
   backend: getBackend(),
   canvas: document.querySelector('#canvas'),
@@ -114,17 +99,16 @@ lightApp.ready().then(async () => {
 
   getInput().use(camera.handleEvent.bind(camera));
 
-  const assetManager = new AssetManager();
   scene.env.light.strength = 0.3;
 
   const loadPercent = 0;
   let message = `Loading %${loadPercent} ...`;
-  fetchAssetArchive('./assets/sponza.zip', (percent) => {
+  fetchAssetArchive('https://cdn.zephyr3d.org/doc/assets/sponza.zip', (percent) => {
     message = `Loading %${percent} ...`;
   }).then(async (zipContent) => {
-    const fileMap = await readZip(zipContent);
-    (assetManager.vfs as HttpFS).urlResolver = (url) => fileMap.get(url) || url;
-
+    const zipfs = new ZipFS(zip);
+    await zipfs.initializeFromData(zipContent);
+    const assetManager = new AssetManager(zipfs);
     assetManager.fetchModel(scene, '/sponza/Sponza.gltf').then((info) => {
       message = '';
       function traverseModel(group: SceneNode, func: (node: SceneNode) => void, context?: any) {

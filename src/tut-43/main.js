@@ -117,7 +117,7 @@ myApp.ready().then(async () => {
   light.lookAt(Vector3.one(), Vector3.zero(), Vector3.axisPY());
 
   const assetManager = new AssetManager();
-  const tex = await assetManager.loadTexture('./assets/images/layer.jpg');
+  const tex = await assetManager.loadTexture('https://cdn.zephyr3d.org/doc/assets/images/layer.jpg');
   const material = new MyLambertMaterial();
   material.color.setXYZW(1, 1, 0, 1);
   material.diffuseTexture = tex;
